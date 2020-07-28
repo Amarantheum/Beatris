@@ -1,0 +1,24 @@
+[package]
+name = "tetris_logic"
+version = "0.1.0"
+authors = ["Amarantheum <kougharagua@gmail.com>", "Q-pen <qpen'semail@website.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rayon = "1.3.1"
+numpy = "0.11.0"
+ndarray = "0.13.1"
+lazy_static = "1.4.0"
+
+[dependencies.pyo3]
+version = "0.11.1"
+features = ["extension-module"]
+
+[lib]
+crate-type = ["cdylib"]
+name = "tetris_logic"
+
+[profile.dev]
+opt-level = 3
