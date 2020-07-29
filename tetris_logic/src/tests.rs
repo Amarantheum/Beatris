@@ -8,6 +8,7 @@ use std::fmt;
 use std::sync::Mutex;
 use std::thread;
 use std::sync::atomic::{AtomicI32, AtomicUsize, AtomicU8, Ordering};
+use std::time;
 
 
 lazy_static! {
@@ -74,6 +75,9 @@ static mut Z_BLOCK: AtomicI32 = AtomicI32::new(0);
 static mut J_BLOCK: AtomicI32 = AtomicI32::new(0);
 static mut L_BLOCK: AtomicI32 = AtomicI32::new(0);
 
+//can't be greater than 9 for the moment
+const MOVES_PER_THREAD: usize = 20;
+
 fn get_box_unit() -> usize {
     unsafe {
         BOX_UNIT.load(Ordering::Relaxed)
@@ -109,6 +113,8 @@ fn get_height_cost() -> i32 {
         HEIGHT_COST.load(Ordering::Relaxed)
     }
 }
+
+#[derive(Clone)]
 struct Field {
     field_state: Array::<u8, Ix2>,
     upcoming_pieces: [u8;5],
@@ -306,6 +312,7 @@ impl Field {
                 piece.get_all_moves(false)
             };
             let original_depth = depth;
+            let start = time::Instant::now();
             for i in 0..moves.len() {
                 let field = match Field::from(self, &moves[i], &piece) {
                     Ok(f) => f,
@@ -316,10 +323,118 @@ impl Field {
                     recursive_resulting_fields(field, depth - 1, i, result_clone, original_depth);
                 });
                 handles.push(handle);
-            }        
+            }  
+            //println!("initial thread creation time: {:?}", start.elapsed());
+            let start = time::Instant::now();  
             for handle in handles {
                 handle.join().expect("heck I died lol");
             }
+            //println!("finished: {:?}", start.elapsed());
+            let move_id = child_result.lock().unwrap().0;
+            Some(moves[move_id])
+        }
+    }
+    fn calculate_all_resulting_fields_new(&self, depth: usize, stored: bool) -> Option<Move> {
+        if depth == 0 {
+            println!("{}",self.eval());
+            None
+        }
+        else {
+            let child_result = Arc::new(Mutex::new((0, f32::MIN)));
+            let piece = Piece::get_piece_from_id(self.upcoming_pieces[0]).unwrap();
+            let mut handles = Vec::new();
+            let moves = if stored == true {if let Some(stored_piece) = self.stored_piece {
+                let mut vec = piece.get_all_moves(false);
+                vec.append(&mut Piece::get_piece_from_id(stored_piece).unwrap().get_all_moves(true));
+                vec
+            } else {
+                piece.get_all_moves(false)
+            }} else {
+                piece.get_all_moves(false)
+            };
+            
+            let original_depth = depth;
+            let overlap = moves.len() % MOVES_PER_THREAD;
+            let total_iterations = moves.len()/MOVES_PER_THREAD;
+            if total_iterations > 0 {
+                let mut moves_clone = moves.clone();
+                let extra = overlap/total_iterations;
+                let mut extra_extra = overlap % total_iterations;
+                //println!("overlap: {}", overlap);
+                //println!("len:{}", moves_clone.len());
+                let start = time::Instant::now(); 
+                for i in 0..total_iterations {
+                    let result_clone = Arc::clone(&child_result);
+                    //sets the number of moves that will be passed into the thread created for the current iteration
+                    let length = if extra_extra == 0 {
+                        MOVES_PER_THREAD + extra
+                    } else {
+                        extra_extra -= 1;
+                        MOVES_PER_THREAD + extra + 1
+                    };
+
+                    
+
+                    let field = self.clone();
+
+                    //for keeping track of move ids
+                    let moves_start_index = moves_clone.len() - length;
+                    
+                    //moves that will be passed into the thread for this iteration
+                    let tmp_moves = moves_clone.split_off(moves_start_index);
+                    //println!("len:{}", moves_clone.len());
+                    //overall mutex clone
+                    let result_clone = Arc::clone(&child_result);
+
+                    let piece = piece.clone();
+
+                    //spawn new thread
+                    let handle = thread::spawn(move || {
+                        let child_result_thread = Arc::new(Mutex::new((0, f32::MIN)));
+                        let mut child_handles = Vec::with_capacity(length);
+                        for i in 0..length {
+                            let child_result_clone = Arc::clone(&child_result_thread);
+                            let new_field = match Field::from(&field, &tmp_moves[i], &piece) {
+                                Ok(f) => f,
+                                Err(_) => continue,
+                            };
+                            let interior_handle = thread::spawn(move || {
+                                recursive_resulting_fields_new(new_field, depth - 1, moves_start_index + i, child_result_clone, original_depth)
+                            });
+                            child_handles.push(interior_handle);
+                        }
+                        for handle in child_handles {
+                            handle.join().unwrap();
+                        }
+                        let best_move = *child_result_thread.lock().unwrap();
+                        let mut max_eval = result_clone.lock().unwrap();
+                        if max_eval.1 < best_move.1 {
+                            *max_eval = best_move;
+                        }
+                    });
+                    handles.push(handle);
+                }
+            }
+            else {
+                for i in 0..moves.len() {
+                    let field = match Field::from(self, &moves[i], &piece) {
+                        Ok(f) => f,
+                        Err(_e) => continue,
+                    };
+                    let result_clone = Arc::clone(&child_result);
+                    let handle = thread::spawn(move || {
+                        recursive_resulting_fields(field, depth - 1, i, result_clone, original_depth);
+                    });
+                    handles.push(handle);
+                } 
+            }
+            
+            //println!("initial thread creation time: {:?}", start.elapsed());
+            let start = time::Instant::now();  
+            for handle in handles {
+                handle.join().expect("heck I died lol");
+            }
+            //println!("finished: {:?}", start.elapsed());
             let move_id = child_result.lock().unwrap().0;
             Some(moves[move_id])
         }
@@ -337,6 +452,7 @@ fn recursive_resulting_fields(f: Field, depth: usize, move_id: usize, result: Ar
         }
     }
     else {
+        let start = time::Instant::now();
         let child_result = Arc::new(Mutex::new((0, f32::MIN)));
         let piece = Piece::get_piece_from_id(f.upcoming_pieces[original_depth - depth]).unwrap();
         let mut handles = Vec::new();
@@ -358,6 +474,116 @@ fn recursive_resulting_fields(f: Field, depth: usize, move_id: usize, result: Ar
             });
             handles.push(handle);
         }
+        //println!("thread creation time: {:?}", start.elapsed());    
+        for handle in handles {
+            handle.join().unwrap();
+        }
+        let mut max_eval = result.lock().unwrap();
+        let child_result = child_result.lock().unwrap().1;
+        if max_eval.1 < child_result {
+            *max_eval = (move_id, child_result);
+        }
+    }
+}
+
+fn recursive_resulting_fields_new(f: Field, depth: usize, move_id: usize, result: Arc<Mutex<(usize, f32)>>, original_depth: usize) {
+    if depth == 0 {
+        let eval = f.eval();
+        let mut max_eval = result.lock().unwrap();
+        //println!("{},{}",move_id, eval);
+        //println!("{}", f);
+        if max_eval.1 < eval {
+            *max_eval = (move_id, eval);
+            //println!("{},{}",move_id, eval);
+        }
+    }
+    else {
+        let start = time::Instant::now();
+        let child_result = Arc::new(Mutex::new((0, f32::MIN)));
+        let piece = Piece::get_piece_from_id(f.upcoming_pieces[original_depth - depth]).unwrap();
+
+        let moves = if let Some(stored_piece) = f.stored_piece {
+            let mut vec = piece.get_all_moves(false);
+            vec.append(&mut Piece::get_piece_from_id(stored_piece).unwrap().get_all_moves(true));
+            vec
+        }
+        else {
+            piece.get_all_moves(false)
+        };
+        let mut handles = Vec::new();
+        
+        let mut overlap = moves.len() % MOVES_PER_THREAD;
+        let total_iterations = moves.len()/MOVES_PER_THREAD;
+        if total_iterations > 0 {
+            let extra = overlap/total_iterations;
+            let mut extra_extra = overlap % total_iterations;
+            let mut moves_clone = moves.clone();
+
+            
+            for i in 0..total_iterations {
+                let result_clone = Arc::clone(&child_result);
+                //sets the number of moves that will be passed into the thread created for the current iteration
+                let length = if extra_extra == 0 {
+                    MOVES_PER_THREAD + extra
+                } else {
+                    extra_extra -= 1;
+                    MOVES_PER_THREAD + extra + 1
+                };
+
+                let field = f.clone();
+
+                //for keeping track of move ids
+                let moves_start_index = moves_clone.len() - length;
+                
+                //moves that will be passed into the thread for this iteration
+                let tmp_moves = moves_clone.split_off(moves_start_index);
+
+                //overall mutex clone
+                let result_clone = Arc::clone(&child_result);
+
+                let piece = piece.clone();
+
+                //spawn new thread
+                let handle = thread::spawn(move || {
+                    let child_result_thread = Arc::new(Mutex::new((0, f32::MIN)));
+                    let mut child_handles = Vec::with_capacity(length);
+                    for i in 0..length {
+                        let child_result_clone = Arc::clone(&child_result_thread);
+                        let new_field = match Field::from(&field, &tmp_moves[i], &piece) {
+                            Ok(f) => f,
+                            Err(_) => continue,
+                        };
+                        let interior_handle = thread::spawn(move || {
+                            recursive_resulting_fields_new(new_field, depth - 1, moves_start_index + i, child_result_clone, original_depth)
+                        });
+                        child_handles.push(interior_handle);
+                    }
+                    for handle in child_handles {
+                        handle.join().unwrap();
+                    }
+                    let best_move = *child_result_thread.lock().unwrap();
+                    let mut max_eval = result_clone.lock().unwrap();
+                    if max_eval.1 < best_move.1 {
+                        *max_eval = best_move;
+                    }
+                });
+                handles.push(handle);
+            }
+        }
+        else {
+            for m in moves {
+                let field = match Field::from(&f, &m, &piece) {
+                    Ok(f) => f,
+                    Err(_e) => continue,
+                };
+                let result_clone = Arc::clone(&child_result);
+                let handle = thread::spawn(move || {
+                    recursive_resulting_fields(field, depth - 1, move_id, result_clone, original_depth);
+                });
+                handles.push(handle);
+            }
+        }
+        //println!("thread creation time: {:?}", start.elapsed());    
         for handle in handles {
             handle.join().unwrap();
         }
@@ -401,7 +627,7 @@ impl Move {
 
 impl Display for Move {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "(Rotation: {}, Position: {})", self.rotation, self.position)
+        write!(f, "(Rotation: {}, Position: {}, Store: {})", self.rotation, self.position, self.store)
     }
 }
 
@@ -452,14 +678,99 @@ mod tests {
     use super::Move;
     use super::Piece;
     use std::time;
+    use std::thread::sleep;
+    use rand::Rng;
+
+
+
+
 
     #[test]
+    //#[ignore]
     fn from_test() {
+        let mut total1 = 0;
+        let mut total2 = 0;
+        for i in 0..100 {
+            
+            let mut field = Field::new([rand::thread_rng().gen_range(0,7),rand::thread_rng().gen_range(0,7),rand::thread_rng().gen_range(0,7),5,4]);
+            //let mut field = Field::new([5,2,5,6,7]);
+            let m = Move::from((0,0,true));
+            field.stored_piece = Some(rand::thread_rng().gen_range(0,7));
+            let start = time::Instant::now();
+            let m1 = match field.calculate_all_resulting_fields(2){
+                Some(m) => m,
+                None => panic!("bruh"),
+            };
+            total1 += start.elapsed().as_millis();
+            //sleep(time::Duration::from_secs(3));
+            let start = time::Instant::now();
+            let m2 = match field.calculate_all_resulting_fields_new(2, true){
+                Some(m) => m,
+                None => panic!("bruh"),
+            };
+            total2 += start.elapsed().as_millis();
+        }
+        println!("first: {}, second: {}, diff: {}, ratio: {}", total1, total2, total1 as i128 - total2 as i128, total1 as f32/total2 as f32)
+    }
+
+    #[test]
+    #[ignore]
+    fn joy_colors() {
+        let i_bgr: [u8;3] = [215, 155, 15];
+        let o_bgr: [u8;3] = [2,159,227];
+        let t_bgr: [u8;3] = [138, 41, 175];
+        let s_bgr: [u8;3] = [1, 177, 89];
+        let z_bgr: [u8;3] = [55, 15, 215];
+        let j_bgr: [u8;3] = [198, 65, 33];
+        let l_bgr: [u8;3] = [2, 91, 227];
+        let arr1 = [i_bgr, o_bgr, t_bgr, s_bgr, z_bgr, j_bgr, l_bgr];
+
+        let i_bgr: [u8;3] = [210, 153, 86];
+        let o_bgr: [u8;3] = [80,163,217];
+        let t_bgr: [u8;3] = [135, 62, 162]; 
+        let s_bgr: [u8;3] = [68, 176, 112];
+        let z_bgr: [u8;3] = [63, 66, 198];
+        let j_bgr: [u8;3] = [191, 64, 40];
+        let l_bgr: [u8;3] = [64, 101, 211];
+        let arr2 = [i_bgr, o_bgr, t_bgr, s_bgr, z_bgr, j_bgr, l_bgr];
         
-        let mut field = Field::new([1,2,6,5,4]);
-        let m = Move::from((0,0,true));
-        field.stored_piece = Some(0);
-        println!("{}", field);
-        field.calculate_all_resulting_fields(1);
+        //new stuff
+        let i_bgr: [u8;3] = [221, 153, 0];
+        let o_bgr: [u8;3] = [0,160,236];
+        let t_bgr: [u8;3] = [139, 0, 190]; 
+        let s_bgr: [u8;3] = [0, 186, 37];
+        let z_bgr: [u8;3] = [32, 0, 232];
+        let j_bgr: [u8;3] = [206, 35, 46];
+        let l_bgr: [u8;3] = [0, 80, 242];
+        let arr2 = [i_bgr, o_bgr, t_bgr, s_bgr, z_bgr, j_bgr, l_bgr];
+
+
+        let mut min = 1000;
+        for i in 0..arr1.len() {
+            for j in 0..arr1.len() {
+                let dif = compare_colors(arr2[i], arr2[j]);
+                if min > dif && dif > 0 {
+                    min = dif;
+                    println!("{}, {}, {:?}, {:?}", i, j, arr2[i], arr2[j]);
+                }
+            }
+        }
+        let mut max = 0;
+        for i in 0..arr1.len() {
+            let dif = compare_colors(arr1[i], arr2[i]);
+            if max < dif {
+                max = dif;
+            }
+        }
+        println!("{}, {}", min, max);
+        println!("{}", compare_colors(o_bgr, s_bgr));
+    }
+
+    fn compare_colors(bgr1: [u8;3], bgr2: [u8;3]) -> usize {
+        let mut difference = 0;
+        for bgr_index in 0..3{
+            difference += ((bgr2[bgr_index] as i32 - bgr1[bgr_index] as i32)).abs() as usize;
+        }
+        difference/3
     }
 }

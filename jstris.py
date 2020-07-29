@@ -16,6 +16,9 @@ monitor = Tk()
 
 #global variables
 box_unit = 24
+stored_piece = False
+depth = 2
+keyboard_delay = 0.016000001
 
 #define pieces:
 #   0: I block (cyan), 1: O block (yellow), 2: T block (pink), 3: S block (green), 
@@ -110,8 +113,7 @@ def get_upcoming_pieces():
             pieces.append(piece)
     return pieces
 
-keyboard_delay = 0.016000001
-#keyboard_delay = 0.02
+#keyboard_delay = 0.5
 def make_move(move):
     if move[2] == True:
         keyboardCont.press('c')
@@ -149,8 +151,10 @@ def update_pic():
     global game_img
     global upcoming_pieces
     global saved_piece
+    global depth
+    global stored_piece
     game_img = cv2.cvtColor(np.array(sct.grab(game_box)), cv2.COLOR_BGRA2BGR)
-    move = tetris_logic.get_next_move(game_img, 2)
+    move = tetris_logic.get_next_move(game_img, depth, stored_piece)
     make_move(move)
     time.sleep(0)
     
@@ -170,7 +174,7 @@ print("Game Start!")
 while get_falling_piece() == None:
     game_img = cv2.cvtColor(np.array(sct.grab(game_box)), cv2.COLOR_BGRA2BGR)
 
-stored_piece = False
+
 
 if stored_piece:
     tetris_logic.set_stored_piece(get_falling_piece())
@@ -183,7 +187,10 @@ tetris_logic.set_upcoming_pieces(upcoming_pieces)
 if stored_piece:
     keyboardCont.press('c')
     keyboardCont.release('c')
-time.sleep(0.5)
+    game_img = cv2.cvtColor(np.array(sct.grab(game_box)), cv2.COLOR_BGRA2BGR)
+    move = tetris_logic.get_next_move(game_img, 1, False)
+    make_move(move)
+#time.sleep(0.1)
 
 print(upcoming_pieces)
 
