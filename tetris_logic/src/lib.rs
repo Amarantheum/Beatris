@@ -722,13 +722,18 @@ fn track_garbage(img: ArrayViewD<u8>) {
                     row[[0, x]] = 0;
                 }
             }
+            println!("row {}: {}", y, row);
             if gray {
                 garbage_map = stack![Axis(0), row, garbage_map];
+                println!("garbage map: {:?}", garbage_map);
             }
             else {
                 break;
             }
         }  
+        {
+            *GARBAGE_CALCULATION.lock().unwrap() = false;
+        }
     });
 }
 
@@ -753,7 +758,7 @@ fn get_next_move(_py: Python, img: PyReadonlyArrayDyn<u8>, depth: usize, stored:
     field.field_state = new_field.field_state;
     field.upcoming_pieces = pieces;
     field.stored_piece = new_field.stored_piece;
-    //println!("{}", field);
+    println!("{}", field);
     if !*GARBAGE_CALCULATION.lock().unwrap() {
         track_garbage(img);
     }

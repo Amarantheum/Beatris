@@ -17,7 +17,7 @@ monitor = Tk()
 #global variables
 box_unit = 24
 stored_piece = False
-depth = 2
+depth = 3
 keyboard_delay = 0.016000001
 
 #define pieces:
@@ -157,7 +157,6 @@ def update_pic():
     move = tetris_logic.get_next_move(game_img, depth, stored_piece)
     make_move(move)
     time.sleep(0)
-    
 #This checks if the game has started at all, or if the previous game didn't end
 while check_game_starting() == False:
     game_img = cv2.cvtColor(np.array(sct.grab(game_box)), cv2.COLOR_BGRA2BGR)
@@ -187,6 +186,7 @@ tetris_logic.set_upcoming_pieces(upcoming_pieces)
 if stored_piece:
     keyboardCont.press('c')
     keyboardCont.release('c')
+    time.sleep(keyboard_delay)
     game_img = cv2.cvtColor(np.array(sct.grab(game_box)), cv2.COLOR_BGRA2BGR)
     move = tetris_logic.get_next_move(game_img, 1, False)
     make_move(move)
