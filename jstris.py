@@ -17,7 +17,7 @@ monitor = Tk()
 #global variables
 box_unit = 24
 stored_piece = False
-depth = 3
+depth = 2
 keyboard_delay = 0.016000001
 
 #define pieces:

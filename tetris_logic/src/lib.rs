@@ -75,13 +75,12 @@ lazy_static! {
         bgr: [2, 91, 227],
         orientations: vec![(3, array![[0, 0, 1], [1, 1, 1]]), (4, array![[1, 0], [1, 0], [1, 1]]), (3, array![[1, 1, 1], [1, 0, 0]]), (3, array![[1, 1], [0, 1], [0, 1]])],
     });
-    static ref GRAY_BGR: Arc<[u8;3]> = Arc::new([106, 106, 106]);
+    static ref GRAY_BGR: Arc<[u8;3]> = Arc::new([153, 153, 153]);
     static ref FIELD: Mutex<Field> = Mutex::new(Field::new([0,0,0,0,0]));
     static ref GARBAGE_CALCULATION: Mutex<bool> = Mutex::new(false);
 }
 
 // Game Setting Constants
-static mut TRACK_GARBAGE: AtomicBool = AtomicBool::new(false); // Clarification: Garbage are gray blocks sent by game or other players
 static mut COLOR_THRESH: AtomicUsize = AtomicUsize::new(15);
 const MOVES_PER_THREAD: usize = 20;
 // Evaluation Constants
@@ -153,6 +152,7 @@ struct Field {
     stored_piece: Option<u8>,
     value: f32,
     combo: u8,
+    garbage_height: u8,
 }
 
 impl Field {
@@ -164,6 +164,7 @@ impl Field {
             stored_piece: None,
             value: 0.0,
             combo: 0,
+            garbage_height: 0,
         }
     }
     fn from<'a>(prior_field: &Field, new_move: &Move, new_piece: &Piece) -> Result<Field, &'a str> {
@@ -252,6 +253,7 @@ impl Field {
 
             value: prior_field.value.clone(),
             combo: prior_field.combo.clone(),
+            garbage_height: prior_field.garbage_height.clone(),
         };
         Field::clean_sent_lines(&mut f);
         Ok(f)
@@ -268,10 +270,15 @@ impl Field {
     fn clean_sent_lines(field: &mut Field){
         let mut count = 0;
         let blank = Array::<u8, Ix2>::zeros((1,10));
+        let h = 20 - field.garbage_height;
         for y in 0..20 {
             if field.field_state.slice(s![y, 0..10]).sum() == 10 {
                 count += 1;
                 field.field_state = stack![Axis(0), blank.view(), field.field_state.slice(s![0..y, 0..10]), field.field_state.slice(s![y + 1..20, 0..10])];
+                if y as usize >= h as usize {
+                    field.garbage_height -= 1;
+                    println!("omg");
+                }
             }
         }
         if (field.field_state.slice(s![19, 0..10])).sum() == 0 {
@@ -721,16 +728,26 @@ fn track_garbage(img: ArrayViewD<u8>) {
                 else {
                     row[[0, x]] = 0;
                 }
-            }
-            println!("row {}: {}", y, row);
+            };
             if gray {
                 garbage_map = stack![Axis(0), row, garbage_map];
-                println!("garbage map: {:?}", garbage_map);
             }
             else {
                 break;
             }
         }  
+        if !garbage_map.is_empty() {
+            let mut field = &mut *FIELD.lock().unwrap();
+            println!("Garbage Updated: {}", garbage_map.shape()[0]);
+            if garbage_map.shape()[0] as u8 > field.garbage_height {
+                field.field_state = stack![Axis(0), field.field_state.slice(s![garbage_map.shape()[0] - field.garbage_height as usize..20 - field.garbage_height as usize,..]), garbage_map];
+            }
+            else {
+                let top_zeros = Array::<u8, Ix2>::zeros((field.garbage_height as usize - garbage_map.shape()[0], 10));
+                field.field_state = stack![Axis(0), top_zeros, field.field_state.slice(s![0 as usize..20 - field.garbage_height as usize,..]), garbage_map];
+            }
+            field.garbage_height = garbage_map.shape()[0] as u8;
+        }
         {
             *GARBAGE_CALCULATION.lock().unwrap() = false;
         }
@@ -739,9 +756,9 @@ fn track_garbage(img: ArrayViewD<u8>) {
 
 #[pyfunction]
 fn get_next_move(_py: Python, img: PyReadonlyArrayDyn<u8>, depth: usize, stored: bool) -> (u8, i8, bool) {
+    
     let mut field = &mut *FIELD.lock().unwrap();
     let img = img.as_array();
-    
     let mut pieces: [u8; 5] = [0; 5];
     for i in 0..4 {
         pieces[i] = field.upcoming_pieces[i + 1];
@@ -754,10 +771,12 @@ fn get_next_move(_py: Python, img: PyReadonlyArrayDyn<u8>, depth: usize, stored:
         Some(piece_id) => pieces[4] = piece_id as u8,
     }
     let m = match field.calculate_all_resulting_fields_new(depth, stored){Some(m) => m, None => panic!("smh. your life has 0 depth")};
+    println!("heckds");
     let new_field = Field::from(&field, &m, &Piece::get_piece_from_id(field.upcoming_pieces[0]).unwrap()).unwrap();
     field.field_state = new_field.field_state;
     field.upcoming_pieces = pieces;
     field.stored_piece = new_field.stored_piece;
+    field.garbage_height = new_field.garbage_height;
     println!("{}", field);
     if !*GARBAGE_CALCULATION.lock().unwrap() {
         track_garbage(img);
@@ -837,12 +856,6 @@ fn get_corner_coords(_py: Python, fullscr_img: PyReadonlyArrayDyn<u8>, corner_im
 }
 
 //Functions for setting global variables
-#[pyfunction]
-fn set_track_garbage(b: bool) {
-    unsafe {
-        *TRACK_GARBAGE.get_mut() = b;
-    }
-}
 
 #[pyfunction]
 fn set_color_thresh(i: usize) {
