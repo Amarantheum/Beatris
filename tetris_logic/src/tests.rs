@@ -686,7 +686,7 @@ mod tests {
 
 
     #[test]
-    //#[ignore]
+    #[ignore]
     fn from_test() {
         let mut total1 = 0;
         let mut total2 = 0;

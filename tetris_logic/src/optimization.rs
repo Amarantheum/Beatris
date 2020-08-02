@@ -1,8 +1,4 @@
-use pyo3::prelude::*;
-use pyo3::wrap_pyfunction;
 use rayon::prelude::*;
-use numpy::{IntoPyArray, PyArrayDyn, PyReadonlyArrayDyn};
-use numpy::array::PyArray;
 use ndarray::prelude::*;
 use ndarray::stack;
 use pyo3::exceptions;
@@ -13,25 +9,9 @@ use std::sync::Mutex;
 use std::thread;
 use  std::sync::atomic::{AtomicI32, AtomicUsize, AtomicU8, Ordering, AtomicBool};
 use std::time;
-
-
-#[macro_use]
-extern crate lazy_static;
-
-pub mod tests;
-pub mod optimization;
-
-const I_BGR: [u8;3] = [215, 155, 15];
-const O_BGR: [u8;3] = [2,159,227];
-const T_BGR: [u8;3] = [138, 41, 175];
-const S_BGR: [u8;3] = [1, 177, 89];
-const Z_BGR: [u8;3] = [55, 15, 215];
-const J_BGR: [u8;3] = [198, 65, 33];
-const L_BGR: [u8;3] = [2, 91, 227];
-
-const BLANK_BGR: [u8; 3] = [0, 0, 0];
-//const GRAY_BGR: [u8; 3] = [106, 106, 106];
-const PIECE_BGR_VALUES:[[u8;3];7] = [I_BGR, O_BGR, T_BGR, S_BGR, Z_BGR, J_BGR, L_BGR];
+use rand::Rng;
+use std::ops::Range;
+use rand::seq::SliceRandom;
 
 lazy_static! {
     static ref I_PIECE: Arc<Piece> = Arc::new(Piece {
@@ -75,88 +55,161 @@ lazy_static! {
         bgr: [2, 91, 227],
         orientations: vec![(3, array![[0, 0, 1], [1, 1, 1]]), (4, array![[1, 0], [1, 0], [1, 1]]), (3, array![[1, 1, 1], [1, 0, 0]]), (3, array![[1, 1], [0, 1], [0, 1]])],
     });
-    static ref GRAY_BGR: Arc<[u8;3]> = Arc::new([153, 153, 153]);
-    static ref FIELD: Mutex<Field> = Mutex::new(Field::new([0,0,0,0,0]));
-    static ref GARBAGE_CALCULATION: Mutex<bool> = Mutex::new(false);
-}
+    
 
-// Game Setting Constants,
-static mut COLOR_THRESH: AtomicUsize = AtomicUsize::new(15);
+}
+const NUMBER_OF_MOVES: usize = 1000;
 const MOVES_PER_THREAD: usize = 20;
-// Evaluation Constants
-static mut BOX_UNIT: AtomicUsize = AtomicUsize::new(24);
-static mut HOLE_COST: AtomicI32 = AtomicI32::new(10);
-static mut HOLE_HEIGHT_COST: AtomicI32 = AtomicI32::new(2);
-static mut LINE_VALUE: AtomicI32 = AtomicI32::new(25);
-static mut JAGGED_COST: AtomicI32 = AtomicI32::new(2);
-static mut HEIGHT_THRESHOLD: AtomicU8 = AtomicU8::new(8);
-static mut HEIGHT_COST: AtomicI32 = AtomicI32::new(4);
+const DEPTH: usize = 2;
+const NUMBER_OF_TRIALS: usize = 3;
 
-// Storing Pieces Constants
-static mut I_BLOCK: AtomicI32 = AtomicI32::new(2);
-static mut O_BLOCK: AtomicI32 = AtomicI32::new(0);
-static mut T_BLOCK: AtomicI32 = AtomicI32::new(1);
-static mut S_BLOCK: AtomicI32 = AtomicI32::new(0);
-static mut Z_BLOCK: AtomicI32 = AtomicI32::new(0);
-static mut J_BLOCK: AtomicI32 = AtomicI32::new(0);
-static mut L_BLOCK: AtomicI32 = AtomicI32::new(0);
+fn optimization(range: f32) {
+    // Generate random float values for constants
+    let mut rng = rand::thread_rng();
+    let hole_cost = rng.gen_range(0.0, range);
+    let hole_height_cost = rng.gen_range(0.0, range);
+    let jagged_cost = rng.gen_range(0.0, range);
+    let height_cost = rng.gen_range(0.0, range); 
+    let combo_value = rng.gen_range(0.0, range); 
+    
 
-fn get_gray_bgr() -> [u8; 3] {
-    *Arc::clone(&GRAY_BGR)
+    let line_values = [rng.gen_range(0.0, range), rng.gen_range(0.0, range), rng.gen_range(0.0, range), rng.gen_range(0.0, range)]; 
+
+    let height_threshold = rng.gen_range(0, 20);
+    
+    println!("Values:\nhole_cost {}\nhole_height_cost {}\njagged_cost {}\nheight_cost {}\ncombo_value {}\nline_value {:?}\nheight_threshold {}", hole_cost, hole_height_cost, jagged_cost, height_cost, combo_value, line_values, height_threshold);
+    
+    // Storing Pieces Constants
+    let stored_piece_value = [rng.gen_range(-range, range), rng.gen_range(-range, range), rng.gen_range(-range, range), rng.gen_range(-range, range), rng.gen_range(-range, range), rng.gen_range(-range, range), rng.gen_range(-range, range)];
+    
+    let height_threshold = rng.gen_range(0, 20);
+
+    let hole_cost = 21.0;
+    let hole_height_cost = 20.0;
+    let jagged_cost = 20.0;
+    let height_cost = 20.0; 
+    let combo_value = 20.0; 
+    let height_threshold = 4;
+    
+
+    let line_values = [0.0, 5.0, 5.0, 10.0]; 
+
+    
+
+    // Run Tests
+    // Lol this let thingy is just temporary meme idk sus fa'am ez op e
+    let mut average_attack = 0;
+    for i in 0..NUMBER_OF_TRIALS {
+        match run_test(NUMBER_OF_MOVES, hole_cost, hole_height_cost, line_values, jagged_cost, height_cost, combo_value, height_threshold, stored_piece_value) {
+            TestResult::Lost(num_moves, attack) => {
+                let adjusted_attack = attack * num_moves / NUMBER_OF_MOVES as i32;
+                println!("Meme Lost Smh: {}", num_moves);
+                println!("Attack");
+                println!("Adjusted attack: {}", adjusted_attack);
+                average_attack += adjusted_attack;
+            },
+            TestResult::Complete(attack) => {
+                println!("Finished with attack: {}", attack);
+                average_attack += attack;
+            },
+        };
+    }
+    average_attack = average_attack/NUMBER_OF_TRIALS as i32;
 }
 
-fn get_color_thresh() -> usize {
-    unsafe {
-        COLOR_THRESH.load(Ordering::Relaxed)
+#[cfg(test)]
+mod tests {
+
+    #[test]
+    fn epic() {
+        super::optimization(100.0);
     }
 }
-fn get_box_unit() -> usize {
-    unsafe {
-        BOX_UNIT.load(Ordering::Relaxed)
+
+fn run_test(num_moves: usize, hole_cost: f32, hole_height_cost: f32, line_values: [f32;4], jagged_cost: f32, height_cost: f32, combo_value: f32, height_threshold: u8, stored_piece_value: [f32;7]) -> TestResult {
+    let mut generator = PieceGenerator::new();
+    let mut field = Field::new([generator.get_next_piece(), generator.get_next_piece(), generator.get_next_piece(), generator.get_next_piece(), generator.get_next_piece()], hole_cost, hole_height_cost, line_values, jagged_cost, height_cost, combo_value, height_threshold, stored_piece_value);
+    
+    for i in 0..num_moves {
+        let suggested_move = match field.calculate_all_resulting_fields_new(DEPTH, true) {
+            Some(m) => m,
+            None => panic!("smh at the disco"),
+        };
+        field = match Field::from(&field, &suggested_move, &Piece::get_piece_from_id(field.upcoming_pieces[0]).unwrap()) {
+            Ok(m) => m,
+            Err(_) => {
+                return TestResult::Lost(i as i32, field.total_attack);
+            },
+        };
+        let mut new_upcoming = [0;5];
+        for i in 0..4 { 
+            new_upcoming[i] = field.upcoming_pieces[i + 1];
+        }
+        field.upcoming_pieces = new_upcoming;
+        field.upcoming_pieces[4] = generator.get_next_piece();
+        field.value = 0.0;
+        //println!("field: {}, move: {}", field, i);
     }
+    TestResult::Complete(field.total_attack)
 }
-fn get_hole_cost() -> i32 {
-    unsafe {
-        HOLE_COST.load(Ordering::Relaxed)
+
+enum TestResult {
+    Lost(i32, i32),
+    Complete(i32),
+}
+
+#[derive(Clone)]
+struct PieceGenerator {
+    upcoming_pieces: Vec<u8>,
+}
+
+impl PieceGenerator {
+    fn new() -> PieceGenerator {
+        PieceGenerator {
+            upcoming_pieces: PieceGenerator::get_next_bag(),
+        }
     }
-}
-fn get_hole_height_cost() -> i32 {
-    unsafe {
-        HOLE_HEIGHT_COST.load(Ordering::Relaxed)
+    fn get_next_piece(&mut self) -> u8 {
+        if self.upcoming_pieces.len() == 0 {
+            self.upcoming_pieces = PieceGenerator::get_next_bag();
+        }
+        self.upcoming_pieces.remove(0)
     }
-}
-fn get_line_value() -> i32 {
-    unsafe {
-        LINE_VALUE.load(Ordering::Relaxed)
+    fn get_next_bag() -> Vec<u8> {
+        let mut rng = rand::thread_rng();
+        let mut upcoming_piece_bag = [0, 1, 2, 3, 4, 5, 6];
+        upcoming_piece_bag.shuffle(&mut rng);
+        Vec::from(upcoming_piece_bag)
     }
+
 }
-fn get_jagged_cost() -> i32 {
-    unsafe {
-        JAGGED_COST.load(Ordering::Relaxed)
-    }
-}
-fn get_height_threshold() -> u8 {
-    unsafe {
-        HEIGHT_THRESHOLD.load(Ordering::Relaxed)
-    }
-}
-fn get_height_cost() -> i32 {
-    unsafe {
-        HEIGHT_COST.load(Ordering::Relaxed)
-    }
-}
+
+
 #[derive(Clone)]
 struct Field {
     field_state: Array::<u8, Ix2>,
     upcoming_pieces: [u8;5],
     stored_piece: Option<u8>,
     value: f32,
-    combo: u8,
-    garbage_height: u8,
+    combo: usize,
+    back_to_back: bool,
+    
+    total_attack: i32,
+    
+    hole_cost: f32,
+    hole_height_cost: f32,
+    line_value: [f32;4],
+    jagged_cost: f32,
+    height_cost: f32,
+    combo_value: f32,
+
+    height_threshold: u8,
+
+    stored_piece_value: [f32;7],
 }
 
 impl Field {
-    fn new(upcoming_pieces: [u8;5]) -> Field {
+    fn new(upcoming_pieces: [u8;5], hole_cost: f32, hole_height_cost: f32, line_value: [f32; 4], jagged_cost: f32, height_cost: f32, combo_value: f32, height_threshold: u8, stored_piece_value: [f32; 7]) -> Field {
         Field {
             field_state: Array::<u8, Ix2>::zeros((20, 10)),
             // Create a three-dimensional f64 array, initialized with zeros
@@ -164,7 +217,18 @@ impl Field {
             stored_piece: None,
             value: 0.0,
             combo: 0,
-            garbage_height: 0,
+            back_to_back: false,
+
+            total_attack: 0,
+
+            hole_cost,
+            hole_height_cost,
+            line_value,
+            jagged_cost,
+            height_cost,
+            combo_value,
+            height_threshold,
+            stored_piece_value,
         }
     }
     fn from<'a>(prior_field: &Field, new_move: &Move, new_piece: &Piece) -> Result<Field, &'a str> {
@@ -248,48 +312,108 @@ impl Field {
                 }
                 field_state
             },
-            upcoming_pieces: prior_field.upcoming_pieces.clone(), 
+            upcoming_pieces: prior_field.upcoming_pieces, 
             
 
-            value: prior_field.value.clone(),
-            combo: prior_field.combo.clone(),
-            garbage_height: prior_field.garbage_height.clone(),
+            value: prior_field.value,
+            combo: prior_field.combo,
+            back_to_back: prior_field.back_to_back,
+
+            total_attack: prior_field.total_attack,
+            
+            hole_cost: prior_field.hole_cost,
+            hole_height_cost: prior_field.hole_height_cost,
+            line_value: prior_field.line_value,
+            jagged_cost: prior_field.jagged_cost,
+            height_cost: prior_field.hole_height_cost,
+            combo_value: prior_field.combo_value,
+            height_threshold: prior_field.height_threshold,
+            stored_piece_value: prior_field.stored_piece_value,
+            
         };
         Field::clean_sent_lines(&mut f);
         Ok(f)
     }
-    fn eval_sent_lines(attack:usize) -> f32 {
+    fn eval_sent_lines(attack:usize, field: &mut Field) -> f32 {
         match attack {
             0 => 0.0, 
-            1 => -0.5, 
-            2 | 3 => (attack - 1).pow(2) as f32,
-            4 => 16.0,
-            _ => (attack).pow(2) as f32, 
+            1 => {
+                field.back_to_back = false;
+                field.total_attack += 0;
+                field.line_value[0]
+            },
+            2 => {
+                field.back_to_back = false;
+                field.total_attack += 1;
+                field.line_value[1]
+            },
+            3 => {
+                field.back_to_back = false;
+                field.total_attack += 2;
+                field.line_value[2]
+            },
+            4 => {
+                field.total_attack += 4;
+                if field.back_to_back {
+                    field.total_attack += 1;
+                }
+                else {
+                    field.back_to_back = true;
+                }
+                field.line_value[3]
+            },
+            _ => {
+                field.back_to_back = false;
+                field.total_attack = attack as i32;
+                100000.0
+            },
+        }
+    }
+    fn eval_combo(&mut self, combo:usize) {
+        match combo {
+            0 => return, 
+            1 => return,
+            1 => {
+                self.total_attack += 0;
+            },
+            2..=4 => {
+                self.total_attack += 1;
+            },
+            5 | 6 => {
+                self.total_attack += 2;
+            },
+            7 | 8 => {
+                self.total_attack += 3;
+            },
+            9..=11 => {
+                self.total_attack += 4;
+            },
+            _ => {
+                self.total_attack += 5;
+            },
         }
     }
     fn clean_sent_lines(field: &mut Field){
         let mut count = 0;
         let blank = Array::<u8, Ix2>::zeros((1,10));
-        let h = 20 - field.garbage_height;
         for y in 0..20 {
             if field.field_state.slice(s![y, 0..10]).sum() == 10 {
                 count += 1;
                 field.field_state = stack![Axis(0), blank.view(), field.field_state.slice(s![0..y, 0..10]), field.field_state.slice(s![y + 1..20, 0..10])];
-                if y as usize >= h as usize {
-                    field.garbage_height -= 1;
-                }
             }
         }
         if (field.field_state.slice(s![19, 0..10])).sum() == 0 {
             count = 10;
         }
         if count != 0 {
+            field.eval_combo(field.combo);
             field.combo += 1;
         }
         else {
+            field.value += field.combo as f32 * field.combo_value;
             field.combo = 0;
         }
-        field.value += get_line_value() as f32 * Field::eval_sent_lines(count) as f32;
+        field.value += Field::eval_sent_lines(count, field);
     }
     fn eval(&self) -> f32 {
         let mut y_values = [0; 10];
@@ -306,8 +430,8 @@ impl Field {
                     height_found = true;
                     //height_sum += 20 - index;
                     y_values[x] = index;
-                    if (y_values[x] as u8) < (20 - get_height_threshold() as u8) {
-                        height_costs += 20 - y_values[x] - get_height_threshold() as usize;
+                    if (y_values[x] as u8) < (20 - &self.height_threshold) {
+                        height_costs += 20 - y_values[x] as u8 - self.height_threshold;
                     }
                 }
                 None => {
@@ -328,7 +452,7 @@ impl Field {
                 }
             }
         }
-        let score = -(get_jagged_cost() * jaggedness as i32 + get_hole_height_cost() * hole_value as i32 + get_hole_cost() * hole_count as i32 + get_height_cost() * height_costs as i32) as f32;
+        let score = -(self.jagged_cost * jaggedness as f32 + self.hole_height_cost * hole_value as f32 + self.hole_cost * hole_count as f32 + self.height_cost * height_costs as f32);
         score
     }
     
@@ -703,232 +827,4 @@ impl Piece {
             _ => Err("Specified piece id does not exist!"),
         }
     }
-}
-
-
-fn track_garbage(img: ArrayViewD<u8>) {
-    {
-        *GARBAGE_CALCULATION.lock().unwrap() = true;
-    }
-    let img = img.to_owned();
-    thread::spawn(move || {
-        let mut garbage_map = Array::<u8, Ix2>::zeros((0,10));
-        for y in 0..20 {
-            let mut gray = false;
-            let mut row = Array::<u8, Ix2>::zeros((1,10));
-            for x in 0..10 {
-                if x > 1 && !gray {
-                    break;
-                }
-                if compare_colors(&img.slice(s![(19 - y) * get_box_unit(), x * get_box_unit(), ..]).to_vec(), get_gray_bgr()) < get_color_thresh() {
-                    gray = true;
-                    row[[0, x]] = 1;
-                }
-                else {
-                    row[[0, x]] = 0;
-                }
-            };
-            if gray {
-                garbage_map = stack![Axis(0), row, garbage_map];
-            }
-            else {
-                break;
-            }
-        }  
-        if !garbage_map.is_empty() {
-            let mut field = &mut *FIELD.lock().unwrap();
-            if field.garbage_height > 0 {
-                let top_garbage_row = match field.field_state.slice(s![20 - field.garbage_height as usize, ..]).into_iter().position(|&x| x == 0) {
-                    Some(i) => i,
-                    None => panic!("this isn't a garbage row nani"),
-                };
-                let mut count = 0;
-                for row in 0..garbage_map.shape()[0] {
-                    if garbage_map.slice(s![row, ..]).into_iter().position(|&x| x == 0) == Some(top_garbage_row) {
-                        field.field_state = stack![Axis(0), field.field_state.slice(s![garbage_map.shape()[0] - field.garbage_height as usize - row..20, ..]), garbage_map.slice(s![row + field.garbage_height as usize..,..])];
-                        field.garbage_height = (garbage_map.shape()[0] - row) as u8;
-                        break;
-                    } 
-                    if count > 3 {
-                        field.field_state = stack![Axis(0), field.field_state.slice(s![garbage_map.shape()[0].., ..]), garbage_map];
-                        field.garbage_height = garbage_map.shape()[0] as u8;
-                        break;
-                    }
-                    count += 1;
-                }
-            }
-            else {
-                println!("added {}", garbage_map.shape()[0]);
-                field.field_state = stack![Axis(0), field.field_state.slice(s![garbage_map.shape()[0].., ..]), garbage_map];
-                field.garbage_height = garbage_map.shape()[0] as u8;
-            }
-        }
-        {
-            *GARBAGE_CALCULATION.lock().unwrap() = false;
-        }
-    });
-}
-
-#[pyfunction]
-fn get_next_move(_py: Python, img: PyReadonlyArrayDyn<u8>, depth: usize, stored: bool) -> (u8, i8, bool) {
-    
-    let mut field = &mut *FIELD.lock().unwrap();
-    let img = img.as_array();
-    let mut pieces: [u8; 5] = [0; 5];
-    for i in 0..4 {
-        pieces[i] = field.upcoming_pieces[i + 1];
-    }
-    match rust_identify_piece(img.slice(s![(get_box_unit() as f32 * (1.5 + 4.0 * 3.0)).round() as usize, (get_box_unit() as f32 * 12.5).round() as usize,..]).into_iter().cloned().collect()) {
-        None => match rust_identify_piece(img.slice(s![(get_box_unit() as f32 * (2.5 + 4.0 as f32 * 3.0)).round() as usize, (get_box_unit() as f32 * 12.5).round() as usize,..]).into_iter().cloned().collect()) {
-            None => panic!("smh"),
-            Some(piece_id) => pieces[4] = piece_id as u8,
-        },
-        Some(piece_id) => pieces[4] = piece_id as u8,
-    }
-    let m = match field.calculate_all_resulting_fields_new(depth, stored){Some(m) => m, None => panic!("smh. your life has 0 depth")};
-    let new_field = Field::from(&field, &m, &Piece::get_piece_from_id(field.upcoming_pieces[0]).unwrap()).unwrap();
-    field.field_state = new_field.field_state;
-    field.upcoming_pieces = pieces;
-    field.stored_piece = new_field.stored_piece;
-    field.garbage_height = new_field.garbage_height;
-    //println!("{}", field);
-    if !*GARBAGE_CALCULATION.lock().unwrap() {
-        track_garbage(img);
-    }
-    (m.rotation, m.position, m.store)
-}
-
-//used at the beginning of the program to init
-#[pyfunction]
-fn set_upcoming_pieces(pieces: Vec<u8>) {
-    let mut field = &mut *FIELD.lock().unwrap();
-    field.upcoming_pieces.copy_from_slice(&pieces[0..5]);
-}
-
-#[pyfunction]
-fn set_stored_piece(piece: u8) {
-    let mut field = &mut *FIELD.lock().unwrap();
-    field.stored_piece = Some(piece);
-}
-
-#[pyfunction]
-fn identify_piece(py: Python, bgr: Vec<u8>) -> PyResult<usize> {
-    match rust_identify_piece(bgr) {
-        None => return Ok(404),
-        Some(piece_id) => return Ok(piece_id),
-    }
-}
-
-fn rust_identify_piece(bgr: Vec<u8>) -> Option<usize>{
-    for i in 0..7 {
-        let difference = compare_colors(&bgr, PIECE_BGR_VALUES[i]);
-        if difference < get_color_thresh(){
-            return Some(i);
-        }
-    }
-    None
-}
-
-fn compare_colors(bgr1: &Vec<u8>, bgr2: [u8;3]) -> usize {
-    let mut difference = 0;
-    for bgr_index in 0..3{
-        difference += ((bgr2[bgr_index] as i32 - bgr1[bgr_index] as i32)).abs() as usize;
-    }
-    difference/3
-}
-
-#[pyfunction] 
-fn get_upcoming_pieces(_py: Python, fullscr_img: PyReadonlyArrayDyn<u8>, box_unit: usize) -> Vec<usize> {
-    let fullscr_img = fullscr_img.as_array();
-    let mut pieces = Vec::with_capacity(5);
-    for i in 0..5 {
-        match rust_identify_piece(fullscr_img.slice(s![(box_unit as f32 * (1.5 + i as f32 * 3.0)).round() as usize, (box_unit as f32 * 12.5).round() as usize,..]).into_iter().cloned().collect()) {
-            None => match rust_identify_piece(fullscr_img.slice(s![(box_unit as f32 * (2.5 + i as f32 * 3.0)).round() as usize, (box_unit as f32 * 12.5).round() as usize,..]).into_iter().cloned().collect()) {
-                None => panic!("smh"),
-                Some(piece_id) => pieces.push(piece_id),
-            },
-            Some(piece_id) => pieces.push(piece_id),
-        };
-    }
-    pieces
-}
-
-#[pyfunction] 
-fn get_corner_coords(_py: Python, fullscr_img: PyReadonlyArrayDyn<u8>, corner_img: PyReadonlyArrayDyn<u8>, box_unit: usize) -> PyResult<[usize;2]> {
-    let fullscr_img = fullscr_img.as_array();
-    let corner_img = corner_img.as_array();
-    for y in 0..fullscr_img.shape()[0] - box_unit {
-        for x in 0..fullscr_img.shape()[1] - box_unit {
-            if fullscr_img.slice(s![y, x,..]) == corner_img.slice(s![0, 0,..]) {
-                if (&fullscr_img.slice(s![y..(y + box_unit), x..(x + box_unit),..]) - &corner_img).mapv(|a| a.pow(2)).sum() == 0{
-                    return Ok([y,x]);
-                }
-            }
-        }
-    }
-    Err(exceptions::RuntimeError::py_err("smh"))
-}
-
-//Functions for setting global variables
-
-#[pyfunction]
-fn set_color_thresh(i: usize) {
-    unsafe {
-        *COLOR_THRESH.get_mut() = i;
-    }
-}
-
-#[pyfunction] 
-fn set_hole_cost(i: i32) {
-    unsafe {
-        *HOLE_COST.get_mut() = i;
-    }
-}
-#[pyfunction] 
-fn set_hole_height_cost(i: i32) {
-    unsafe {
-        *HOLE_HEIGHT_COST.get_mut() = i;
-    }
-}
-#[pyfunction] 
-fn set_line_value(i: i32) {
-    unsafe {
-        *LINE_VALUE.get_mut() = i;
-    }
-}
-#[pyfunction] 
-fn set_jagged_cost(i: i32) {
-    unsafe {
-        *JAGGED_COST.get_mut() = i;
-    }
-}
-#[pyfunction] 
-fn set_height_threshold(i: u8) {
-    unsafe {
-        *HEIGHT_THRESHOLD.get_mut() = i;
-    }
-}
-#[pyfunction] 
-fn set_height_cost(i: i32) {
-    unsafe {
-        *HEIGHT_COST.get_mut() = i;
-    }
-}
-
-
-#[pymodule]
-fn tetris_logic(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
-    m.add_wrapped(wrap_pyfunction!(get_upcoming_pieces))?;
-    m.add_wrapped(wrap_pyfunction!(get_corner_coords))?;
-    m.add_wrapped(wrap_pyfunction!(identify_piece))?;
-    m.add_wrapped(wrap_pyfunction!(get_next_move))?;
-    m.add_wrapped(wrap_pyfunction!(set_upcoming_pieces))?;
-    m.add_wrapped(wrap_pyfunction!(set_stored_piece))?;
-    m.add_wrapped(wrap_pyfunction!(set_hole_cost))?;
-    m.add_wrapped(wrap_pyfunction!(set_hole_height_cost))?;
-    m.add_wrapped(wrap_pyfunction!(set_line_value))?;
-    m.add_wrapped(wrap_pyfunction!(set_jagged_cost))?;
-    m.add_wrapped(wrap_pyfunction!(set_height_threshold))?;
-    m.add_wrapped(wrap_pyfunction!(set_height_cost))?;
-    Ok(())
 }
