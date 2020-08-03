@@ -106,7 +106,7 @@ fn optimization(range: f64) {
         }
     });
 
-    let mut handles = Vec::with_capacity(34); //wouldn't it be 16*2-1 = 32 -1 = 31 instead of 17 * 2
+    let mut handles = Vec::with_capacity(34); 
 
     for i in 0..17 {
         handles.append(&mut ga_constant(&constants, i));
