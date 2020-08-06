@@ -12,6 +12,7 @@ use rand::Rng;
 use std::ops::Range;
 use rand::seq::SliceRandom;
 use std::io;
+<<<<<<< HEAD
 use std::fs;
 use std::fs::File;
 use std::path::{Path, PathBuf};
@@ -22,6 +23,8 @@ use std::io::BufRead;
 use std::io::{Error, ErrorKind};
 
 
+=======
+>>>>>>> 0d4d277b6222c0f775f8f82d44fdaa5aea0ad1f7
 
 lazy_static! {
     static ref I_PIECE: Arc<Piece> = Arc::new(Piece {
@@ -69,6 +72,7 @@ lazy_static! {
     static ref STOP: Mutex<bool> = Mutex::new(false);
 }
 
+<<<<<<< HEAD
 const NUMBER_OF_MOVES: usize = 10;
 const MOVES_PER_THREAD: usize = 20;
 const DEPTH: usize = 2;
@@ -78,6 +82,15 @@ const TEST_STEP: f64 = 1.0;
 const STORED_PIECES: bool = false;
 
 
+=======
+const NUMBER_OF_MOVES: usize = 1000;
+const MOVES_PER_THREAD: usize = 20;
+const DEPTH: usize = 2;
+const NUMBER_OF_TRIALS: usize = 3;
+const OPT_RATE: f64 = 1.0;
+const TEST_STEP: f64 = 1.0;
+
+>>>>>>> 0d4d277b6222c0f775f8f82d44fdaa5aea0ad1f7
 fn optimization(range: f64) {
     // Generate random float values for constants
     let mut rng = rand::thread_rng();
@@ -92,6 +105,7 @@ fn optimization(range: f64) {
     let height_threshold = rng.gen_range(0, 20);
     
     // Storing Pieces Constants
+<<<<<<< HEAD
     let stored_piece_value = if !STORED_PIECES {
         None
     } else {
@@ -99,6 +113,11 @@ fn optimization(range: f64) {
     };
 
     let mut constants = OptimizationConstants {
+=======
+    let stored_piece_value = [rng.gen_range(-range, range), rng.gen_range(-range, range), rng.gen_range(-range, range), rng.gen_range(-range, range), rng.gen_range(-range, range), rng.gen_range(-range, range), rng.gen_range(-range, range)];
+
+    let constants = OptimizationConstants {
+>>>>>>> 0d4d277b6222c0f775f8f82d44fdaa5aea0ad1f7
         hole_cost,
         hole_height_cost,
         jagged_cost,
@@ -107,6 +126,7 @@ fn optimization(range: f64) {
         line_values,
         height_threshold,
         stored_piece_value,
+<<<<<<< HEAD
 
         value: None,
     };
@@ -335,6 +355,123 @@ fn ga_constant (constants: &OptimizationConstants, constant_index: i8) -> Result
             panic!("Smh Bruh not a correct index");
         }
     }
+=======
+    };
+
+    //start a thread that reads the input stream to see if it should stop the program
+    thread::spawn(|| {
+        loop {
+            let mut input = String::new();
+            io::stdin().read_line(&mut input).expect("failed to read line");
+            if input.trim() == String::from("quit") {
+                break;
+            }
+            else {
+                println!("unrecognized request: {}", input.trim());
+            }
+        }
+    });
+
+    let mut handles = Vec::with_capacity(34); 
+
+    for i in 0..17 {
+        handles.append(&mut ga_constant(&constants, i));
+    }
+
+    // Run Trials w/ Gradient Ascent
+
+    //hole_cost 
+    
+    run_test_trials(&constants);
+}
+
+fn ga_constant (constants: &OptimizationConstants, constant_index: i8) -> Vec<thread::JoinHandle<()>>{
+    let mut const_handles = Vec::with_capacity(2);
+    let outputs = Arc::new(Mutex::new([0.0, 0.0]));
+    let output_clone_pos = Arc::clone(&outputs);
+    let output_clone_neg = Arc::clone(&outputs);
+    let mut constants_pos;
+    let mut constants_neg;
+    match constant_index { 
+        0 => {
+            constants_pos = constants.update_hole_cost(TEST_STEP);
+            constants_neg = constants.update_hole_cost(-TEST_STEP);
+        }
+        1 => {
+            constants_pos = constants.update_hole_height_cost(TEST_STEP);
+            constants_neg = constants.update_hole_height_cost(-TEST_STEP);
+        }
+        2 => {
+            constants_pos = constants.update_line_values(0, TEST_STEP);
+            constants_neg = constants.update_line_values(0, -TEST_STEP);
+        }
+        3 => {
+            constants_pos = constants.update_line_values(1, TEST_STEP);
+            constants_neg = constants.update_line_values(1, -TEST_STEP);
+        }
+        4 => {
+            constants_pos = constants.update_line_values(2, TEST_STEP);
+            constants_neg = constants.update_line_values(2, -TEST_STEP);
+        }
+        5 => {
+            constants_pos = constants.update_line_values(3, TEST_STEP);
+            constants_neg = constants.update_line_values(3, -TEST_STEP);
+        }
+        6 => {
+            constants_pos = constants.update_jagged_cost(TEST_STEP);
+            constants_neg = constants.update_jagged_cost(-TEST_STEP);
+        }
+        7 => {
+            constants_pos = constants.update_height_cost(TEST_STEP);
+            constants_neg = constants.update_height_cost(-TEST_STEP);
+        }
+        8 => {
+            constants_pos = constants.update_combo_value(TEST_STEP);
+            constants_neg = constants.update_combo_value(-TEST_STEP);
+        }
+        9 => {
+            constants_pos = match constants.update_height_threshold(TEST_STEP as u8) {
+                Ok(value) => value,
+                Err(_) => panic!("Smh idk"),
+            };
+            constants_neg = match constants.update_height_threshold(-TEST_STEP as u8) {
+                Ok(value) => value,
+                Err(_) => panic!("Smh idk"),
+            };
+        }
+        10 => {
+            constants_pos = constants.update_stored_piece_value(0, TEST_STEP);
+            constants_neg = constants.update_stored_piece_value(0, -TEST_STEP);
+        }
+        11 => {
+            constants_pos = constants.update_stored_piece_value(1, TEST_STEP);
+            constants_neg = constants.update_stored_piece_value(1, -TEST_STEP);
+        }
+        12 => {
+            constants_pos = constants.update_stored_piece_value(2, TEST_STEP);
+            constants_neg = constants.update_stored_piece_value(2, -TEST_STEP);
+        }
+        13 => {
+            constants_pos = constants.update_stored_piece_value(3, TEST_STEP);
+            constants_neg = constants.update_stored_piece_value(3, -TEST_STEP);
+        }
+        14 => {
+            constants_pos = constants.update_stored_piece_value(4, TEST_STEP);
+            constants_neg = constants.update_stored_piece_value(4, -TEST_STEP);
+        }
+        15 => {
+            constants_pos = constants.update_stored_piece_value(5, TEST_STEP);
+            constants_neg = constants.update_stored_piece_value(5, -TEST_STEP);
+        }
+        16 => {
+            constants_pos = constants.update_stored_piece_value(6, TEST_STEP);
+            constants_neg = constants.update_stored_piece_value(6, -TEST_STEP);
+        }
+        _ => {
+            panic!("Smh Bruh not a correct index")
+        }
+    }
+>>>>>>> 0d4d277b6222c0f775f8f82d44fdaa5aea0ad1f7
     let pos_handle = thread::spawn(move || {
         let tmp = run_test_trials(&constants_pos);
         output_clone_pos.lock().unwrap()[0] = tmp;
@@ -347,13 +484,18 @@ fn ga_constant (constants: &OptimizationConstants, constant_index: i8) -> Result
     });
     const_handles.push(neg_handle);
 
+<<<<<<< HEAD
     Ok((outputs, const_handles))
+=======
+    const_handles
+>>>>>>> 0d4d277b6222c0f775f8f82d44fdaa5aea0ad1f7
 }
 
 #[cfg(test)]
 mod tests {
     use rand::Rng;
     use super::OptimizationConstants;
+<<<<<<< HEAD
 
     #[test]
     #[ignore]
@@ -362,6 +504,8 @@ mod tests {
         println!("{:#?}", OptimizationConstants::grab_specific_constants(file, Some(1)));
         println!("{:#?}", OptimizationConstants::grab_all_constants(file));
     }
+=======
+>>>>>>> 0d4d277b6222c0f775f8f82d44fdaa5aea0ad1f7
 
     #[test]
     #[ignore]
@@ -379,7 +523,11 @@ mod tests {
         let height_threshold = rng.gen_range(0, 20);
         
         // Storing Pieces Constants
+<<<<<<< HEAD
         let stored_piece_value = Some([rng.gen_range(-range, range), rng.gen_range(-range, range), rng.gen_range(-range, range), rng.gen_range(-range, range), rng.gen_range(-range, range), rng.gen_range(-range, range), rng.gen_range(-range, range)]);
+=======
+        let stored_piece_value = [rng.gen_range(-range, range), rng.gen_range(-range, range), rng.gen_range(-range, range), rng.gen_range(-range, range), rng.gen_range(-range, range), rng.gen_range(-range, range), rng.gen_range(-range, range)];
+>>>>>>> 0d4d277b6222c0f775f8f82d44fdaa5aea0ad1f7
 
         let constants = OptimizationConstants {
             hole_cost,
@@ -390,6 +538,7 @@ mod tests {
             line_values,
             height_threshold,
             stored_piece_value,
+<<<<<<< HEAD
 
             value: None,
         };
@@ -399,11 +548,15 @@ mod tests {
 
     #[test]
     fn optimize_test() {
+=======
+        };
+>>>>>>> 0d4d277b6222c0f775f8f82d44fdaa5aea0ad1f7
         super::optimization(100.0);
     }
 }
 
 fn run_test_trials(constants: &OptimizationConstants) -> f64 {
+<<<<<<< HEAD
     let mut average_attack = Arc::new(Mutex::new(0.0));
     let mut trial_handles = Vec::with_capacity(NUMBER_OF_TRIALS);
     for i in 0..NUMBER_OF_TRIALS {
@@ -423,6 +576,24 @@ fn run_test_trials(constants: &OptimizationConstants) -> f64 {
                     println!("Finished with attack: {}", attack);
                     let mut att = avg_attack_clone.lock().unwrap();
                     *att += attack as f64;
+=======
+    let mut average_attack = 0.0;
+    let mut trial_handles = Vec::with_capacity(NUMBER_OF_TRIALS);
+    for i in 0..NUMBER_OF_TRIALS {
+        let tmp_constants = constants.clone();
+        let handle = thread::spawn(move || {
+            match run_test(NUMBER_OF_MOVES, tmp_constants.hole_cost, tmp_constants.hole_height_cost, tmp_constants.line_values, tmp_constants.jagged_cost, tmp_constants.height_cost, tmp_constants.combo_value, tmp_constants.height_threshold, tmp_constants.stored_piece_value) {
+                TestResult::Lost(num_moves, attack) => {
+                    let adjusted_attack = attack * num_moves / NUMBER_OF_MOVES as i32;
+                    println!("Meme Lost Smh: {}", num_moves);
+                    println!("Attack");
+                    println!("Adjusted attack: {}", adjusted_attack);
+                    average_attack += adjusted_attack as f64;
+                },
+                TestResult::Complete(attack) => {
+                    println!("Finished with attack: {}", attack);
+                    average_attack += attack as f64;
+>>>>>>> 0d4d277b6222c0f775f8f82d44fdaa5aea0ad1f7
                 },
             };
         });
@@ -431,12 +602,20 @@ fn run_test_trials(constants: &OptimizationConstants) -> f64 {
     for handle in trial_handles {
         handle.join().unwrap();
     }
+<<<<<<< HEAD
     let average_attack = *average_attack.lock().unwrap()/(NUMBER_OF_TRIALS as f64);
     let average_attack_per_move = average_attack/(NUMBER_OF_MOVES as f64);
     average_attack_per_move
 }
 
 fn run_test(num_moves: usize, constants: OptimizationConstants) -> TestResult {
+=======
+    average_attack = average_attack as f64/NUMBER_OF_TRIALS as f64;
+    average_attack
+}
+
+fn run_test(num_moves: usize, hole_cost: f64, hole_height_cost: f64, line_values: [f64;4], jagged_cost: f64, height_cost: f64, combo_value: f64, height_threshold: u8, stored_piece_value: [f64;7]) -> TestResult {
+>>>>>>> 0d4d277b6222c0f775f8f82d44fdaa5aea0ad1f7
     let mut generator = PieceGenerator::new();
     let mut field = Field::new([generator.get_next_piece(), generator.get_next_piece(), generator.get_next_piece(), generator.get_next_piece(), generator.get_next_piece()], constants);
     
@@ -469,7 +648,10 @@ enum TestResult {
 }
  
 #[derive(Clone)]
+<<<<<<< HEAD
 #[derive(Debug)]
+=======
+>>>>>>> 0d4d277b6222c0f775f8f82d44fdaa5aea0ad1f7
 struct OptimizationConstants {
     hole_cost: f64, 
     hole_height_cost: f64, 
@@ -478,6 +660,7 @@ struct OptimizationConstants {
     height_cost: f64, 
     combo_value: f64, 
     height_threshold: u8, 
+<<<<<<< HEAD
     stored_piece_value: Option<[f64;7]>,
 
     value: Option<f64>
@@ -485,6 +668,13 @@ struct OptimizationConstants {
 
 impl OptimizationConstants {
     fn new(hole_cost: f64, hole_height_cost: f64, line_values: [f64; 4], jagged_cost: f64, height_cost: f64, combo_value: f64, height_threshold: u8, stored_piece_value: Option<[f64; 7]>, value: Option<f64>) -> OptimizationConstants {
+=======
+    stored_piece_value: [f64;7],
+}
+
+impl OptimizationConstants {
+    fn new(hole_cost: f64, hole_height_cost: f64, line_values: [f64; 4], jagged_cost: f64, height_cost: f64, combo_value: f64, height_threshold: u8, stored_piece_value: [f64; 7]) -> OptimizationConstants {
+>>>>>>> 0d4d277b6222c0f775f8f82d44fdaa5aea0ad1f7
         OptimizationConstants {
             hole_cost,
             hole_height_cost,
@@ -494,8 +684,11 @@ impl OptimizationConstants {
             combo_value, 
             height_threshold,
             stored_piece_value,
+<<<<<<< HEAD
             
             value,
+=======
+>>>>>>> 0d4d277b6222c0f775f8f82d44fdaa5aea0ad1f7
         }
     }
     fn update_hole_cost(&self, change: f64) -> OptimizationConstants {
@@ -528,6 +721,7 @@ impl OptimizationConstants {
         changed_constants.combo_value += change;
         changed_constants
     }
+<<<<<<< HEAD
     fn update_height_threshold(&self, change: i8) -> Result<OptimizationConstants, &str> {
         let mut changed_constants = self.clone();
         if (changed_constants.height_threshold as i8 + change) < 0 {
@@ -651,6 +845,20 @@ impl OptimizationConstants {
             count += 1;
         }
         Ok(vec_const)
+=======
+    fn update_height_threshold(&self, change: u8) -> Result<OptimizationConstants, &str> {
+        let mut changed_constants = self.clone();
+        if (changed_constants.height_threshold as i8 + change as i8) < 0 {
+            return Err("smh new height is not U8");
+        }
+        changed_constants.height_threshold += change;
+        Ok(changed_constants)
+    }
+    fn update_stored_piece_value(&self, index: usize, change: f64) -> OptimizationConstants {
+        let mut changed_constants = self.clone();
+        changed_constants.stored_piece_value[index] += change;
+        changed_constants
+>>>>>>> 0d4d277b6222c0f775f8f82d44fdaa5aea0ad1f7
     }
 }
 
@@ -696,7 +904,11 @@ struct Field {
 }
 
 impl Field {
+<<<<<<< HEAD
     fn new(upcoming_pieces: [u8;5], constants: OptimizationConstants) -> Field {
+=======
+    fn new(upcoming_pieces: [u8;5], hole_cost: f64, hole_height_cost: f64, line_values: [f64; 4], jagged_cost: f64, height_cost: f64, combo_value: f64, height_threshold: u8, stored_piece_value: [f64; 7]) -> Field {
+>>>>>>> 0d4d277b6222c0f775f8f82d44fdaa5aea0ad1f7
         Field {
             field_state: Array::<u8, Ix2>::zeros((20, 10)),
             // Create a three-dimensional f64 array, initialized with zeros
@@ -708,7 +920,20 @@ impl Field {
 
             total_attack: 0,
             
+<<<<<<< HEAD
             constants,
+=======
+            constants: OptimizationConstants {
+                hole_cost,
+                hole_height_cost,
+                line_values,
+                jagged_cost,
+                height_cost,
+                combo_value,
+                height_threshold,
+                stored_piece_value,
+            },
+>>>>>>> 0d4d277b6222c0f775f8f82d44fdaa5aea0ad1f7
         }
     }
     fn from<'a>(prior_field: &Field, new_move: &Move, new_piece: &Piece) -> Result<Field, &'a str> {
