@@ -398,6 +398,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn optimize_test() {
         super::optimization(100.0);
     }
@@ -541,7 +542,7 @@ impl OptimizationConstants {
         match self.stored_piece_value {
             None => return Err("no stored pieces values"),
             Some(arr) => {
-                let mut changed_constants = self.clone();
+                let changed_constants = self.clone();
                 match changed_constants.stored_piece_value {
                     None => return Err("impossible state"),
                     Some(mut s) => s[index] += change,
@@ -552,16 +553,26 @@ impl OptimizationConstants {
     }
     fn save_to_file (constants: &OptimizationConstants) -> Result<(), std::io::Error> {
         let mut file;
-        let joined_path = "./optimization/test_results.txt";
-        if !std::path::Path::new(joined_path).exists() {
+        let file_name = format!("moves-{}-depth-{}-numtrials-{}-optrate-{}-teststep-{}-storedp-{}.csv", NUMBER_OF_MOVES, DEPTH, NUMBER_OF_TRIALS, OPT_RATE, TEST_STEP, STORED_PIECES);
+        let joined_path = format!("./optimization/{}", file_name);
+        if !std::path::Path::new(&joined_path).exists() {
             if !std::path::Path::new("./optimization").exists() {
-                fs::create_dir("./optimization");
+                fs::create_dir("./optimization")?;
             }
-            file = File::create(joined_path)?;
+            file = File::create(&joined_path)?;
             //file = OpenOptions::new().write(true).open(joined_path);
-            file.write_all("UwU this is spiccy".as_bytes());
+            let top_row = format!("Hole-Cost,Hole-Height-Cost,1-Line-Value,2-Line-Value,3-Line-Value,4-Line-Value,Jagged-Cost,Height-Cost,Combo-Value,Height-Threshold{},Result",if STORED_PIECES {
+                let mut output = String::from("");
+                for i in 0..7 {
+                    output = format!("{},{}", output, format!("Stored-Piece-Value-{}", i));
+                }
+                output
+            } else {
+                String::from("")
+            });
+            file.write_all(top_row.as_bytes())?;
         }
-        file = OpenOptions::new().append(true).open(joined_path)?;
+        file = OpenOptions::new().append(true).open(&joined_path)?;
         let mut argument = format!("\n{},{}", constants.hole_cost, constants.hole_height_cost);
         for i in 0..4 {
             argument = format!("{},{}", argument, constants.line_values[i]);
@@ -938,7 +949,7 @@ impl Field {
             let child_result = Arc::new(Mutex::new((0, f64::MIN)));
             let piece = Piece::get_piece_from_id(self.upcoming_pieces[0]).unwrap();
             let mut handles = Vec::new();
-            let mut moves = if let Some(stored_piece) = self.stored_piece {
+            let moves = if let Some(stored_piece) = self.stored_piece {
                 let mut vec = piece.get_all_moves(false);
                 vec.append(&mut Piece::get_piece_from_id(stored_piece).unwrap().get_all_moves(true));
                 vec
@@ -1147,7 +1158,7 @@ fn recursive_resulting_fields_new(f: Field, depth: usize, move_id: usize, result
         };
         let mut handles = Vec::new();
         
-        let mut overlap = moves.len() % MOVES_PER_THREAD;
+        let overlap = moves.len() % MOVES_PER_THREAD;
         let total_iterations = moves.len()/MOVES_PER_THREAD;
         if total_iterations > 0 {
             let extra = overlap/total_iterations;

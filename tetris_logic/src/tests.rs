@@ -16,42 +16,56 @@ lazy_static! {
         id: 0,
         bgr: [215, 155, 15],
         orientations: vec![(3, array![[1,1,1,1]]), (5, array![[1], [1], [1], [1]])],
+        possible_moves_true: Piece::get_all_moves_prev(vec![(3, array![[1,1,1,1]]), (5, array![[1], [1], [1], [1]])], true),
+        possible_moves_false: Piece::get_all_moves_prev(vec![(3, array![[1,1,1,1]]), (5, array![[1], [1], [1], [1]])], false),
     });
 
     static ref O_PIECE: Arc<Piece> = Arc::new(Piece {
         id: 1,
         bgr: [2,159,227],
         orientations: vec![(4, array![[1, 1], [1, 1]])],
+        possible_moves_true: Piece::get_all_moves_prev(vec![(4, array![[1, 1], [1, 1]])], true),
+        possible_moves_false: Piece::get_all_moves_prev(vec![(4, array![[1, 1], [1, 1]])], false),
     });
 
     static ref T_PIECE: Arc<Piece> = Arc::new(Piece {
         id: 2,
         bgr: [138, 41, 175],
         orientations: vec![(3, array![[0, 1, 0], [1, 1, 1]]), (4, array![[1, 0], [1, 1], [1, 0]]), (3, array![[1, 1, 1], [0, 1, 0]]), (3, array![[0, 1], [1, 1], [0, 1]])],
+        possible_moves_true: Piece::get_all_moves_prev(vec![(3, array![[0, 1, 0], [1, 1, 1]]), (4, array![[1, 0], [1, 1], [1, 0]]), (3, array![[1, 1, 1], [0, 1, 0]]), (3, array![[0, 1], [1, 1], [0, 1]])], true),
+        possible_moves_false: Piece::get_all_moves_prev(vec![(3, array![[0, 1, 0], [1, 1, 1]]), (4, array![[1, 0], [1, 1], [1, 0]]), (3, array![[1, 1, 1], [0, 1, 0]]), (3, array![[0, 1], [1, 1], [0, 1]])], false),
     });
 
     static ref S_PIECE: Arc<Piece> = Arc::new(Piece {
         id: 3,
         bgr: [1, 177, 89],
         orientations: vec![(3, array![[0, 1, 1], [1, 1, 0]]), (4, array![[1, 0], [1, 1], [0, 1]])],
+        possible_moves_true: Piece::get_all_moves_prev(vec![(3, array![[0, 1, 1], [1, 1, 0]]), (4, array![[1, 0], [1, 1], [0, 1]])], true),
+        possible_moves_false: Piece::get_all_moves_prev(vec![(3, array![[0, 1, 1], [1, 1, 0]]), (4, array![[1, 0], [1, 1], [0, 1]])], false),
     });
 
     static ref Z_PIECE: Arc<Piece> = Arc::new(Piece {
         id: 4,
         bgr: [55, 15, 215],
         orientations: vec![(3, array![[1, 1, 0], [0, 1, 1]]), (4, array![[0, 1], [1, 1], [1, 0]])],
+        possible_moves_true: Piece::get_all_moves_prev(vec![(3, array![[1, 1, 0], [0, 1, 1]]), (4, array![[0, 1], [1, 1], [1, 0]])], true),
+        possible_moves_false: Piece::get_all_moves_prev(vec![(3, array![[1, 1, 0], [0, 1, 1]]), (4, array![[0, 1], [1, 1], [1, 0]])], false),
     });
 
     static ref J_PIECE: Arc<Piece> = Arc::new(Piece {
         id: 5,
         bgr: [198, 65, 33],
         orientations: vec![(3, array![[1, 0, 0], [1, 1, 1]]), (4, array![[1, 1], [1, 0], [1, 0]]), (3, array![[1, 1, 1], [0, 0, 1]]), (3, array![[0, 1], [0, 1], [1, 1]])],
+        possible_moves_true: Piece::get_all_moves_prev(vec![(3, array![[1, 0, 0], [1, 1, 1]]), (4, array![[1, 1], [1, 0], [1, 0]]), (3, array![[1, 1, 1], [0, 0, 1]]), (3, array![[0, 1], [0, 1], [1, 1]])], true),
+        possible_moves_false: Piece::get_all_moves_prev(vec![(3, array![[1, 0, 0], [1, 1, 1]]), (4, array![[1, 1], [1, 0], [1, 0]]), (3, array![[1, 1, 1], [0, 0, 1]]), (3, array![[0, 1], [0, 1], [1, 1]])], false),
     });
 
     static ref L_PIECE: Arc<Piece> = Arc::new(Piece {
         id: 6,
         bgr: [2, 91, 227],
         orientations: vec![(3, array![[0, 0, 1], [1, 1, 1]]), (4, array![[1, 0], [1, 0], [1, 1]]), (3, array![[1, 1, 1], [1, 0, 0]]), (3, array![[1, 1], [0, 1], [0, 1]])],
+        possible_moves_true: Piece::get_all_moves_prev(vec![(3, array![[0, 0, 1], [1, 1, 1]]), (4, array![[1, 0], [1, 0], [1, 1]]), (3, array![[1, 1, 1], [1, 0, 0]]), (3, array![[1, 1], [0, 1], [0, 1]])], true),
+        possible_moves_false: Piece::get_all_moves_prev(vec![(3, array![[0, 0, 1], [1, 1, 1]]), (4, array![[1, 0], [1, 0], [1, 1]]), (3, array![[1, 1, 1], [1, 0, 0]]), (3, array![[1, 1], [0, 1], [0, 1]])], false),
     });
     
     //try adding a timer here and if it takes forever to run tetris_logic functions, that means it's doing this every time
@@ -637,13 +651,23 @@ struct Piece {
     bgr: [u8;3],
     //Orientation: how many blocks from left, matrix representing dimensions
     orientations: Vec<(i8, Array2::<u8>)>,
+    possible_moves_false: Vec<Move>,
+    possible_moves_true: Vec<Move>,
 }
 
 impl Piece {
     fn get_all_moves(&self, store: bool) -> Vec<Move> {
+        if store {
+            self.possible_moves_true.clone()
+        }
+        else {
+            self.possible_moves_false.clone()
+        }
+    }
+    fn get_all_moves_prev(orientations: Vec<(i8, Array2::<u8>)>, store: bool) -> Vec<Move> {
         let mut moves = Vec::new();
-        for i in 0..self.orientations.len() {
-            for x in -self.orientations[i].0..(10 - self.orientations[i].1.shape()[1] as i8 - self.orientations[i].0 + 1) {
+        for i in 0..orientations.len() {
+            for x in -orientations[i].0..(10 - orientations[i].1.shape()[1] as i8 - orientations[i].0 + 1) {
                 moves.push(Move {
                     rotation: i as u8,
                     position: x,
@@ -683,10 +707,16 @@ mod tests {
 
 
 
-
+    #[test]
+    fn benchmark() {
+        let piece = Piece::get_piece_from_id(5).unwrap();
+        let start = time::Instant::now();
+        piece.get_all_moves(true);
+        println!("Elapsed: {:?}", start.elapsed());
+    }
 
     #[test]
-    #[ignore]
+    //#[ignore]
     fn from_test() {
         let mut total1 = 0;
         let mut total2 = 0;
@@ -711,66 +741,5 @@ mod tests {
             total2 += start.elapsed().as_millis();
         }
         println!("first: {}, second: {}, diff: {}, ratio: {}", total1, total2, total1 as i128 - total2 as i128, total1 as f32/total2 as f32)
-    }
-
-    #[test]
-    #[ignore]
-    fn joy_colors() {
-        let i_bgr: [u8;3] = [215, 155, 15];
-        let o_bgr: [u8;3] = [2,159,227];
-        let t_bgr: [u8;3] = [138, 41, 175];
-        let s_bgr: [u8;3] = [1, 177, 89];
-        let z_bgr: [u8;3] = [55, 15, 215];
-        let j_bgr: [u8;3] = [198, 65, 33];
-        let l_bgr: [u8;3] = [2, 91, 227];
-        let arr1 = [i_bgr, o_bgr, t_bgr, s_bgr, z_bgr, j_bgr, l_bgr];
-
-        let i_bgr: [u8;3] = [210, 153, 86];
-        let o_bgr: [u8;3] = [80,163,217];
-        let t_bgr: [u8;3] = [135, 62, 162]; 
-        let s_bgr: [u8;3] = [68, 176, 112];
-        let z_bgr: [u8;3] = [63, 66, 198];
-        let j_bgr: [u8;3] = [191, 64, 40];
-        let l_bgr: [u8;3] = [64, 101, 211];
-        let arr2 = [i_bgr, o_bgr, t_bgr, s_bgr, z_bgr, j_bgr, l_bgr];
-        
-        //new stuff
-        let i_bgr: [u8;3] = [221, 153, 0];
-        let o_bgr: [u8;3] = [0,160,236];
-        let t_bgr: [u8;3] = [139, 0, 190]; 
-        let s_bgr: [u8;3] = [0, 186, 37];
-        let z_bgr: [u8;3] = [32, 0, 232];
-        let j_bgr: [u8;3] = [206, 35, 46];
-        let l_bgr: [u8;3] = [0, 80, 242];
-        let arr2 = [i_bgr, o_bgr, t_bgr, s_bgr, z_bgr, j_bgr, l_bgr];
-
-
-        let mut min = 1000;
-        for i in 0..arr1.len() {
-            for j in 0..arr1.len() {
-                let dif = compare_colors(arr2[i], arr2[j]);
-                if min > dif && dif > 0 {
-                    min = dif;
-                    println!("{}, {}, {:?}, {:?}", i, j, arr2[i], arr2[j]);
-                }
-            }
-        }
-        let mut max = 0;
-        for i in 0..arr1.len() {
-            let dif = compare_colors(arr1[i], arr2[i]);
-            if max < dif {
-                max = dif;
-            }
-        }
-        println!("{}, {}", min, max);
-        println!("{}", compare_colors(o_bgr, s_bgr));
-    }
-
-    fn compare_colors(bgr1: [u8;3], bgr2: [u8;3]) -> usize {
-        let mut difference = 0;
-        for bgr_index in 0..3{
-            difference += ((bgr2[bgr_index] as i32 - bgr1[bgr_index] as i32)).abs() as usize;
-        }
-        difference/3
     }
 }
