@@ -20,7 +20,7 @@ use std::io::Write;
 use std::io::BufReader;
 use std::io::BufRead;
 use std::io::{Error, ErrorKind};
-
+use num_cpus;
 
 
 lazy_static! {
@@ -28,45 +28,63 @@ lazy_static! {
         id: 0,
         bgr: [215, 155, 15],
         orientations: vec![(3, array![[1,1,1,1]]), (5, array![[1], [1], [1], [1]])],
+        possible_moves_true: Piece::get_all_moves_prev(vec![(3, array![[1,1,1,1]]), (5, array![[1], [1], [1], [1]])], true),
+        possible_moves_false: Piece::get_all_moves_prev(vec![(3, array![[1,1,1,1]]), (5, array![[1], [1], [1], [1]])], false),
     });
 
     static ref O_PIECE: Arc<Piece> = Arc::new(Piece {
         id: 1,
         bgr: [2,159,227],
         orientations: vec![(4, array![[1, 1], [1, 1]])],
+        possible_moves_true: Piece::get_all_moves_prev(vec![(4, array![[1, 1], [1, 1]])], true),
+        possible_moves_false: Piece::get_all_moves_prev(vec![(4, array![[1, 1], [1, 1]])], false),
     });
 
     static ref T_PIECE: Arc<Piece> = Arc::new(Piece {
         id: 2,
         bgr: [138, 41, 175],
         orientations: vec![(3, array![[0, 1, 0], [1, 1, 1]]), (4, array![[1, 0], [1, 1], [1, 0]]), (3, array![[1, 1, 1], [0, 1, 0]]), (3, array![[0, 1], [1, 1], [0, 1]])],
+        possible_moves_true: Piece::get_all_moves_prev(vec![(3, array![[0, 1, 0], [1, 1, 1]]), (4, array![[1, 0], [1, 1], [1, 0]]), (3, array![[1, 1, 1], [0, 1, 0]]), (3, array![[0, 1], [1, 1], [0, 1]])], true),
+        possible_moves_false: Piece::get_all_moves_prev(vec![(3, array![[0, 1, 0], [1, 1, 1]]), (4, array![[1, 0], [1, 1], [1, 0]]), (3, array![[1, 1, 1], [0, 1, 0]]), (3, array![[0, 1], [1, 1], [0, 1]])], false),
     });
 
     static ref S_PIECE: Arc<Piece> = Arc::new(Piece {
         id: 3,
         bgr: [1, 177, 89],
         orientations: vec![(3, array![[0, 1, 1], [1, 1, 0]]), (4, array![[1, 0], [1, 1], [0, 1]])],
+        possible_moves_true: Piece::get_all_moves_prev(vec![(3, array![[0, 1, 1], [1, 1, 0]]), (4, array![[1, 0], [1, 1], [0, 1]])], true),
+        possible_moves_false: Piece::get_all_moves_prev(vec![(3, array![[0, 1, 1], [1, 1, 0]]), (4, array![[1, 0], [1, 1], [0, 1]])], false),
     });
 
     static ref Z_PIECE: Arc<Piece> = Arc::new(Piece {
         id: 4,
         bgr: [55, 15, 215],
         orientations: vec![(3, array![[1, 1, 0], [0, 1, 1]]), (4, array![[0, 1], [1, 1], [1, 0]])],
+        possible_moves_true: Piece::get_all_moves_prev(vec![(3, array![[1, 1, 0], [0, 1, 1]]), (4, array![[0, 1], [1, 1], [1, 0]])], true),
+        possible_moves_false: Piece::get_all_moves_prev(vec![(3, array![[1, 1, 0], [0, 1, 1]]), (4, array![[0, 1], [1, 1], [1, 0]])], false),
     });
 
     static ref J_PIECE: Arc<Piece> = Arc::new(Piece {
         id: 5,
         bgr: [198, 65, 33],
         orientations: vec![(3, array![[1, 0, 0], [1, 1, 1]]), (4, array![[1, 1], [1, 0], [1, 0]]), (3, array![[1, 1, 1], [0, 0, 1]]), (3, array![[0, 1], [0, 1], [1, 1]])],
+        possible_moves_true: Piece::get_all_moves_prev(vec![(3, array![[1, 0, 0], [1, 1, 1]]), (4, array![[1, 1], [1, 0], [1, 0]]), (3, array![[1, 1, 1], [0, 0, 1]]), (3, array![[0, 1], [0, 1], [1, 1]])], true),
+        possible_moves_false: Piece::get_all_moves_prev(vec![(3, array![[1, 0, 0], [1, 1, 1]]), (4, array![[1, 1], [1, 0], [1, 0]]), (3, array![[1, 1, 1], [0, 0, 1]]), (3, array![[0, 1], [0, 1], [1, 1]])], false),
     });
 
     static ref L_PIECE: Arc<Piece> = Arc::new(Piece {
         id: 6,
         bgr: [2, 91, 227],
         orientations: vec![(3, array![[0, 0, 1], [1, 1, 1]]), (4, array![[1, 0], [1, 0], [1, 1]]), (3, array![[1, 1, 1], [1, 0, 0]]), (3, array![[1, 1], [0, 1], [0, 1]])],
+        possible_moves_true: Piece::get_all_moves_prev(vec![(3, array![[0, 0, 1], [1, 1, 1]]), (4, array![[1, 0], [1, 0], [1, 1]]), (3, array![[1, 1, 1], [1, 0, 0]]), (3, array![[1, 1], [0, 1], [0, 1]])], true),
+        possible_moves_false: Piece::get_all_moves_prev(vec![(3, array![[0, 0, 1], [1, 1, 1]]), (4, array![[1, 0], [1, 0], [1, 1]]), (3, array![[1, 1, 1], [1, 0, 0]]), (3, array![[1, 1], [0, 1], [0, 1]])], false),
     });
 
     static ref STOP: Mutex<bool> = Mutex::new(false);
+
+    static ref NUM_CPUS: usize = num_cpus::get();
+
+    static ref TP: rayon::ThreadPool = rayon::ThreadPoolBuilder::new().num_threads(num_cpus::get()).build().unwrap();
 }
 
 const NUMBER_OF_MOVES: usize = 10;
@@ -139,25 +157,22 @@ fn optimization(range: f64) {
             10
         };
 
-        let mut handles = Vec::with_capacity(num_constants); 
         let mut mutexes = Vec::with_capacity(num_constants);
         
-        for i in 0..num_constants {
-            match ga_constant(&constants, i as i8) {
-                Ok(mut vec) => {
-                    handles.append(&mut vec.1);
-                    mutexes.push(Some(vec.0));
-                },
-                Err(_) => {
-                    mutexes.push(None);
-                    continue;
-                },
+        rayon::scope(|s| {
+            for i in 0..num_constants {
+                match ga_constant(&constants, i as i8, s) {
+                    Ok(vec) => {
+                        mutexes.push(Some(vec));
+                    },
+                    Err(_) => {
+                        mutexes.push(None);
+                        continue;
+                    },
+                }
             }
-        }
-
-        for handle in handles {
-            handle.join().unwrap();
-        }
+        });
+        
 
         let mut dy_list = Vec::with_capacity(num_constants);
 
@@ -285,8 +300,7 @@ fn optimization(range: f64) {
 
 }
 
-fn ga_constant (constants: &OptimizationConstants, constant_index: i8) -> Result<(Arc<Mutex<[f64;2]>>, Vec<thread::JoinHandle<()>>), &str>{
-    let mut const_handles = Vec::with_capacity(2);
+fn ga_constant<'a> (constants: &'a OptimizationConstants, constant_index: i8, s: &rayon::Scope) -> Result<Arc<Mutex<[f64;2]>>, &'a str> {
     let outputs = Arc::new(Mutex::new([0.0, 0.0]));
     let output_clone_pos = Arc::clone(&outputs);
     let output_clone_neg = Arc::clone(&outputs);
@@ -335,19 +349,18 @@ fn ga_constant (constants: &OptimizationConstants, constant_index: i8) -> Result
             panic!("Smh Bruh not a correct index");
         }
     }
-    let pos_handle = thread::spawn(move || {
+
+    s.spawn(move |_| {
         let tmp = run_test_trials(&constants_pos);
         output_clone_pos.lock().unwrap()[0] = tmp;
     });
-    const_handles.push(pos_handle);
 
-    let neg_handle = thread::spawn(move || {
+    s.spawn(move |_| {
         let tmp = run_test_trials(&constants_neg);
         output_clone_neg.lock().unwrap()[1] = tmp;
     });
-    const_handles.push(neg_handle);
 
-    Ok((outputs, const_handles))
+    Ok(outputs)
 }
 
 #[cfg(test)]
@@ -398,7 +411,7 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
+    //#[ignore]
     fn optimize_test() {
         super::optimization(100.0);
     }
@@ -406,32 +419,31 @@ mod tests {
 
 fn run_test_trials(constants: &OptimizationConstants) -> f64 {
     let mut average_attack = Arc::new(Mutex::new(0.0));
-    let mut trial_handles = Vec::with_capacity(NUMBER_OF_TRIALS);
-    for i in 0..NUMBER_OF_TRIALS {
-        let tmp_constants = constants.clone();
-        let avg_attack_clone = Arc::clone(&average_attack);
-        let handle = thread::spawn(move || {
-            match run_test(NUMBER_OF_MOVES, tmp_constants) {
-                TestResult::Lost(num_moves, attack) => {
-                    let adjusted_attack = attack as f64 *  num_moves as f64 / NUMBER_OF_MOVES as f64;
-                    println!("Meme Lost Smh: {}", num_moves);
-                    println!("Attack");
-                    println!("Adjusted attack: {}", adjusted_attack);
-                    let mut att = avg_attack_clone.lock().unwrap();
-                    *att += adjusted_attack as f64;
-                },
-                TestResult::Complete(attack) => {
-                    println!("Finished with attack: {}", attack);
-                    let mut att = avg_attack_clone.lock().unwrap();
-                    *att += attack as f64;
-                },
-            };
-        });
-        trial_handles.push(handle);
-    }
-    for handle in trial_handles {
-        handle.join().unwrap();
-    }
+    rayon::scope(|s| {
+        for i in 0..NUMBER_OF_TRIALS {
+            let tmp_constants = constants.clone();
+            let avg_attack_clone = Arc::clone(&average_attack);
+            s.spawn(move |_| {
+                match run_test(NUMBER_OF_MOVES, tmp_constants) {
+                    TestResult::Lost(num_moves, attack) => {
+                        let adjusted_attack = attack as f64 *  num_moves as f64 / NUMBER_OF_MOVES as f64;
+                        println!("Meme Lost Smh: {}", num_moves);
+                        println!("Attack");
+                        println!("Adjusted attack: {}", adjusted_attack);
+                        let mut att = avg_attack_clone.lock().unwrap();
+                        *att += adjusted_attack as f64;
+                    },
+                    TestResult::Complete(attack) => {
+                        println!("Finished with attack: {}", attack);
+                        let mut att = avg_attack_clone.lock().unwrap();
+                        *att += attack as f64;
+                    },
+                };
+            });
+        }
+    });
+    
+
     let average_attack = *average_attack.lock().unwrap()/(NUMBER_OF_TRIALS as f64);
     let average_attack_per_move = average_attack/(NUMBER_OF_MOVES as f64);
     average_attack_per_move
@@ -442,7 +454,7 @@ fn run_test(num_moves: usize, constants: OptimizationConstants) -> TestResult {
     let mut field = Field::new([generator.get_next_piece(), generator.get_next_piece(), generator.get_next_piece(), generator.get_next_piece(), generator.get_next_piece()], constants);
     
     for i in 0..num_moves {
-        let suggested_move = match field.calculate_all_resulting_fields_new(DEPTH, true) {
+        let suggested_move = match field.calculate_all_resulting_fields_scope(DEPTH, true) {
             Some(m) => m,
             None => panic!("smh at the disco"),
         };
@@ -949,13 +961,15 @@ impl Field {
             let child_result = Arc::new(Mutex::new((0, f64::MIN)));
             let piece = Piece::get_piece_from_id(self.upcoming_pieces[0]).unwrap();
             let mut handles = Vec::new();
-            let moves = if let Some(stored_piece) = self.stored_piece {
-                let mut vec = piece.get_all_moves(false);
+            let mut moves = if let Some(stored_piece) = self.stored_piece {
+                let mut vec: Vec<Move> = piece.get_all_moves(false);
                 vec.append(&mut Piece::get_piece_from_id(stored_piece).unwrap().get_all_moves(true));
                 vec
             }
             else {
-                piece.get_all_moves(false)
+                let mut vec: Vec<Move> = vec![];
+                vec.extend(piece.get_all_moves(false));
+                vec
             };
             let original_depth = depth;
             let start = time::Instant::now();
@@ -977,10 +991,10 @@ impl Field {
             }
             //println!("finished: {:?}", start.elapsed());
             let move_id = child_result.lock().unwrap().0;
-            Some(moves[move_id])
+            Some(moves[move_id].clone())
         }
     }
-    fn calculate_all_resulting_fields_new(&self, depth: usize, stored: bool) -> Option<Move> {
+    fn calculate_all_resulting_fields_TP(&self, depth: usize, stored: bool) -> Option<Move> {
         if depth == 0 {
             println!("{}",self.eval());
             None
@@ -988,9 +1002,8 @@ impl Field {
         else {
             let child_result = Arc::new(Mutex::new((0, f64::MIN)));
             let piece = Piece::get_piece_from_id(self.upcoming_pieces[0]).unwrap();
-            let mut handles = Vec::new();
             let moves = if stored == true {if let Some(stored_piece) = self.stored_piece {
-                let mut vec = piece.get_all_moves(false);
+                let mut vec: Vec<Move> = piece.get_all_moves(false);
                 vec.append(&mut Piece::get_piece_from_id(stored_piece).unwrap().get_all_moves(true));
                 vec
             } else {
@@ -998,94 +1011,113 @@ impl Field {
             }} else {
                 piece.get_all_moves(false)
             };
-            
             let original_depth = depth;
-            let overlap = moves.len() % MOVES_PER_THREAD;
-            let total_iterations = moves.len()/MOVES_PER_THREAD;
-            if total_iterations > 0 {
-                let mut moves_clone = moves.clone();
-                let extra = overlap/total_iterations;
-                let mut extra_extra = overlap % total_iterations;
-                //println!("overlap: {}", overlap);
-                //println!("len:{}", moves_clone.len());
-                let start = time::Instant::now(); 
-                for i in 0..total_iterations {
-                    let result_clone = Arc::clone(&child_result);
-                    //sets the number of moves that will be passed into the thread created for the current iteration
-                    let length = if extra_extra == 0 {
-                        MOVES_PER_THREAD + extra
-                    } else {
-                        extra_extra -= 1;
-                        MOVES_PER_THREAD + extra + 1
-                    };
-
-                    
-
-                    let field = self.clone();
-
-                    //for keeping track of move ids
-                    let moves_start_index = moves_clone.len() - length;
-                    
-                    //moves that will be passed into the thread for this iteration
-                    let tmp_moves = moves_clone.split_off(moves_start_index);
-                    //println!("len:{}", moves_clone.len());
-                    //overall mutex clone
-                    let result_clone = Arc::clone(&child_result);
-
-                    let piece = piece.clone();
-
-                    //spawn new thread
-                    let handle = thread::spawn(move || {
-                        let child_result_thread = Arc::new(Mutex::new((0, f64::MIN)));
-                        let mut child_handles = Vec::with_capacity(length);
-                        for i in 0..length {
-                            let child_result_clone = Arc::clone(&child_result_thread);
-                            let new_field = match Field::from(&field, &tmp_moves[i], &piece) {
-                                Ok(f) => f,
-                                Err(_) => continue,
-                            };
-                            let interior_handle = thread::spawn(move || {
-                                recursive_resulting_fields_new(new_field, depth - 1, moves_start_index + i, child_result_clone, original_depth)
-                            });
-                            child_handles.push(interior_handle);
-                        }
-                        for handle in child_handles {
-                            handle.join().unwrap();
-                        }
-                        let best_move = *child_result_thread.lock().unwrap();
-                        let mut max_eval = result_clone.lock().unwrap();
-                        if max_eval.1 < best_move.1 {
-                            *max_eval = best_move;
-                        }
-                    });
-                    handles.push(handle);
-                }
-            }
-            else {
+            let start = time::Instant::now();
+            
+            TP.install(|| {
+                rayon::scope(|s| {
+                    for i in 0..moves.len() {
+                        let field = match Field::from(self, &moves[i], &piece) {
+                            Ok(f) => f,
+                            Err(_e) => continue,
+                        };
+                        let result_clone = Arc::clone(&child_result);
+                        s.spawn(move |s| {
+                            recursive_resulting_fields_TP(field, depth - 1, i, result_clone, original_depth);
+                        })
+                    }
+                });
+                
+            });
+            //println!("initial thread creation time: {:?}", start.elapsed());
+            let start = time::Instant::now();  
+            //println!("finished: {:?}", start.elapsed());
+            let move_id = child_result.lock().unwrap().0;
+            Some(moves[move_id])
+        }
+    }
+    fn calculate_all_resulting_fields_scope(&self, depth: usize, stored: bool) -> Option<Move> {
+        if depth == 0 {
+            println!("{}",self.eval());
+            None
+        }
+        else {
+            let child_result = Arc::new(Mutex::new((0, f64::MIN)));
+            let piece = Piece::get_piece_from_id(self.upcoming_pieces[0]).unwrap();
+            let moves = if stored == true {if let Some(stored_piece) = self.stored_piece {
+                let mut vec: Vec<Move> = piece.get_all_moves(false);
+                vec.append(&mut Piece::get_piece_from_id(stored_piece).unwrap().get_all_moves(true));
+                vec
+            } else {
+                piece.get_all_moves(false)
+            }} else {
+                piece.get_all_moves(false)
+            };
+            let original_depth = depth;
+            
+            rayon::scope(|s| {
                 for i in 0..moves.len() {
                     let field = match Field::from(self, &moves[i], &piece) {
                         Ok(f) => f,
                         Err(_e) => continue,
                     };
                     let result_clone = Arc::clone(&child_result);
-                    let handle = thread::spawn(move || {
-                        recursive_resulting_fields(field, depth - 1, i, result_clone, original_depth);
-                    });
-                    handles.push(handle);
-                } 
-            }
-            
-            //println!("initial thread creation time: {:?}", start.elapsed());
-            let start = time::Instant::now();  
-            for handle in handles {
-                handle.join().expect("heck I died lol");
-            }
-            //println!("finished: {:?}", start.elapsed());
+                    s.spawn(move |_| {
+                        recursive_resulting_fields_TP(field, depth - 1, i, result_clone, original_depth);
+                    })
+                }
+            });
+
             let move_id = child_result.lock().unwrap().0;
             Some(moves[move_id])
         }
     }
 }
+
+fn recursive_resulting_fields_TP(f: Field, depth: usize, move_id: usize, result: Arc<Mutex<(usize, f64)>>, original_depth: usize) {
+    if depth == 0 {
+        let eval = f.eval();
+        let mut max_eval = result.lock().unwrap();
+        //println!("{},{}",move_id, eval);
+        //println!("{}", f);
+        if max_eval.1 < eval {
+            *max_eval = (move_id, eval);
+            //println!("{},{}",move_id, eval);
+        }
+    }
+    else {
+        let start = time::Instant::now();
+        let child_result = Arc::new(Mutex::new((0, f64::MIN)));
+        let piece = Piece::get_piece_from_id(f.upcoming_pieces[original_depth - depth]).unwrap();
+
+        rayon::scope(|s| {
+            for m in if let Some(stored_piece) = f.stored_piece {
+                let mut vec = piece.get_all_moves(false);
+                vec.append(&mut Piece::get_piece_from_id(stored_piece).unwrap().get_all_moves(true));
+                vec
+            }
+            else {
+                piece.get_all_moves(false)
+            } {
+                let field = match Field::from(&f, &m, &piece) {
+                    Ok(f) => f,
+                    Err(_e) => continue,
+                };
+                let result_clone = Arc::clone(&child_result);
+                s.spawn(move |s| {
+                    recursive_resulting_fields_TP(field, depth - 1, move_id, result_clone, original_depth);
+                })
+            }
+        });
+        //println!("thread creation time: {:?}", start.elapsed());    
+        let mut max_eval = result.lock().unwrap();
+        let child_result = child_result.lock().unwrap().1;
+        if max_eval.1 < child_result {
+            *max_eval = (move_id, child_result);
+        }
+    }
+}
+
 fn recursive_resulting_fields(f: Field, depth: usize, move_id: usize, result: Arc<Mutex<(usize, f64)>>, original_depth: usize) {
     if depth == 0 {
         let eval = f.eval();
@@ -1119,115 +1151,6 @@ fn recursive_resulting_fields(f: Field, depth: usize, move_id: usize, result: Ar
                 recursive_resulting_fields(field, depth - 1, move_id, result_clone, original_depth);
             });
             handles.push(handle);
-        }
-        //println!("thread creation time: {:?}", start.elapsed());    
-        for handle in handles {
-            handle.join().unwrap();
-        }
-        let mut max_eval = result.lock().unwrap();
-        let child_result = child_result.lock().unwrap().1;
-        if max_eval.1 < child_result {
-            *max_eval = (move_id, child_result);
-        }
-    }
-}
-
-fn recursive_resulting_fields_new(f: Field, depth: usize, move_id: usize, result: Arc<Mutex<(usize, f64)>>, original_depth: usize) {
-    if depth == 0 {
-        let eval = f.eval();
-        let mut max_eval = result.lock().unwrap();
-        //println!("{},{}",move_id, eval);
-        //println!("{}", f);
-        if max_eval.1 < eval {
-            *max_eval = (move_id, eval);
-            //println!("{},{}",move_id, eval);
-        }
-    }
-    else {
-        let start = time::Instant::now();
-        let child_result = Arc::new(Mutex::new((0, f64::MIN)));
-        let piece = Piece::get_piece_from_id(f.upcoming_pieces[original_depth - depth]).unwrap();
-
-        let moves = if let Some(stored_piece) = f.stored_piece {
-            let mut vec = piece.get_all_moves(false);
-            vec.append(&mut Piece::get_piece_from_id(stored_piece).unwrap().get_all_moves(true));
-            vec
-        }
-        else {
-            piece.get_all_moves(false)
-        };
-        let mut handles = Vec::new();
-        
-        let overlap = moves.len() % MOVES_PER_THREAD;
-        let total_iterations = moves.len()/MOVES_PER_THREAD;
-        if total_iterations > 0 {
-            let extra = overlap/total_iterations;
-            let mut extra_extra = overlap % total_iterations;
-            let mut moves_clone = moves.clone();
-
-            
-            for i in 0..total_iterations {
-                let result_clone = Arc::clone(&child_result);
-                //sets the number of moves that will be passed into the thread created for the current iteration
-                let length = if extra_extra == 0 {
-                    MOVES_PER_THREAD + extra
-                } else {
-                    extra_extra -= 1;
-                    MOVES_PER_THREAD + extra + 1
-                };
-
-                let field = f.clone();
-
-                //for keeping track of move ids
-                let moves_start_index = moves_clone.len() - length;
-                
-                //moves that will be passed into the thread for this iteration
-                let tmp_moves = moves_clone.split_off(moves_start_index);
-
-                //overall mutex clone
-                let result_clone = Arc::clone(&child_result);
-
-                let piece = piece.clone();
-
-                //spawn new thread
-                let handle = thread::spawn(move || {
-                    let child_result_thread = Arc::new(Mutex::new((0, f64::MIN)));
-                    let mut child_handles = Vec::with_capacity(length);
-                    for i in 0..length {
-                        let child_result_clone = Arc::clone(&child_result_thread);
-                        let new_field = match Field::from(&field, &tmp_moves[i], &piece) {
-                            Ok(f) => f,
-                            Err(_) => continue,
-                        };
-                        let interior_handle = thread::spawn(move || {
-                            recursive_resulting_fields_new(new_field, depth - 1, moves_start_index + i, child_result_clone, original_depth)
-                        });
-                        child_handles.push(interior_handle);
-                    }
-                    for handle in child_handles {
-                        handle.join().unwrap();
-                    }
-                    let best_move = *child_result_thread.lock().unwrap();
-                    let mut max_eval = result_clone.lock().unwrap();
-                    if max_eval.1 < best_move.1 {
-                        *max_eval = best_move;
-                    }
-                });
-                handles.push(handle);
-            }
-        }
-        else {
-            for m in moves {
-                let field = match Field::from(&f, &m, &piece) {
-                    Ok(f) => f,
-                    Err(_e) => continue,
-                };
-                let result_clone = Arc::clone(&child_result);
-                let handle = thread::spawn(move || {
-                    recursive_resulting_fields(field, depth - 1, move_id, result_clone, original_depth);
-                });
-                handles.push(handle);
-            }
         }
         //println!("thread creation time: {:?}", start.elapsed());    
         for handle in handles {
@@ -1283,13 +1206,23 @@ struct Piece {
     bgr: [u8;3],
     //Orientation: how many blocks from left, matrix representing dimensions
     orientations: Vec<(i8, Array2::<u8>)>,
+    possible_moves_false: Vec<Move>,
+    possible_moves_true: Vec<Move>,
 }
 
 impl Piece {
     fn get_all_moves(&self, store: bool) -> Vec<Move> {
+        if store {
+            self.possible_moves_true.clone()
+        }
+        else {
+            self.possible_moves_false.clone()
+        }
+    }
+    fn get_all_moves_prev(orientations: Vec<(i8, Array2::<u8>)>, store: bool) -> Vec<Move> {
         let mut moves = Vec::new();
-        for i in 0..self.orientations.len() {
-            for x in -self.orientations[i].0..(10 - self.orientations[i].1.shape()[1] as i8 - self.orientations[i].0 + 1) {
+        for i in 0..orientations.len() {
+            for x in -orientations[i].0..(10 - orientations[i].1.shape()[1] as i8 - orientations[i].0 + 1) {
                 moves.push(Move {
                     rotation: i as u8,
                     position: x,

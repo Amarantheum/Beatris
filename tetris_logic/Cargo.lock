@@ -504,6 +504,7 @@ version = "0.1.0"
 dependencies = [
  "lazy_static",
  "ndarray",
+ "num_cpus",
  "numpy",
  "pyo3",
  "rand",
