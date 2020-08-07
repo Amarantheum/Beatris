@@ -159,18 +159,20 @@ fn optimization(range: f64) {
 
         let mut mutexes = Vec::with_capacity(num_constants);
         
-        rayon::scope(|s| {
-            for i in 0..num_constants {
-                match ga_constant(&constants, i as i8, s) {
-                    Ok(vec) => {
-                        mutexes.push(Some(vec));
-                    },
-                    Err(_) => {
-                        mutexes.push(None);
-                        continue;
-                    },
+        TP.install(|| {
+            rayon::scope(|s| {
+                for i in 0..num_constants {
+                    match ga_constant(&constants, i as i8, s) {
+                        Ok(vec) => {
+                            mutexes.push(Some(vec));
+                        },
+                        Err(_) => {
+                            mutexes.push(None);
+                            continue;
+                        },
+                    }
                 }
-            }
+            });
         });
         
 
