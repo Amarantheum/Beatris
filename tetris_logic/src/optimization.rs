@@ -553,17 +553,18 @@ impl OptimizationConstants {
         Ok(changed_constants)
     }
     fn update_stored_piece_value(&self, index: usize, change: f64) -> Result<OptimizationConstants, &str> {
-        match self.stored_piece_value {
-            None => return Err("no stored pieces values"),
-            Some(arr) => {
-                let changed_constants = self.clone();
-                match changed_constants.stored_piece_value {
-                    None => return Err("impossible state"),
-                    Some(mut s) => s[index] += change,
-                }
-                Ok(changed_constants)
-            } 
+        if self.stored_piece_value == None {
+            return Err("no stored pieces values");
         }
+        let mut changed_constants = self.clone();
+        match changed_constants.stored_piece_value {
+            None => return Err("impossible state"),
+            Some(mut s) => {
+                s[index] += change;
+                changed_constants.stored_piece_value = Some(s);
+            },
+        }
+        Ok(changed_constants)
     }
     fn save_to_file (constants: &OptimizationConstants) -> Result<(), std::io::Error> {
         let mut file;
