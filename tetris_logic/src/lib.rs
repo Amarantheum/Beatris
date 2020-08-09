@@ -33,64 +33,81 @@ const BLANK_BGR: [u8; 3] = [0, 0, 0];
 //const GRAY_BGR: [u8; 3] = [106, 106, 106];
 const PIECE_BGR_VALUES:[[u8;3];7] = [I_BGR, O_BGR, T_BGR, S_BGR, Z_BGR, J_BGR, L_BGR];
 
+
 lazy_static! {
     static ref I_PIECE: Arc<Piece> = Arc::new(Piece {
         id: 0,
         bgr: [215, 155, 15],
         orientations: vec![(3, array![[1,1,1,1]]), (5, array![[1], [1], [1], [1]])],
+        possible_moves_true: Piece::get_all_moves_prev(vec![(3, array![[1,1,1,1]]), (5, array![[1], [1], [1], [1]])], true),
+        possible_moves_false: Piece::get_all_moves_prev(vec![(3, array![[1,1,1,1]]), (5, array![[1], [1], [1], [1]])], false),
     });
 
     static ref O_PIECE: Arc<Piece> = Arc::new(Piece {
         id: 1,
         bgr: [2,159,227],
         orientations: vec![(4, array![[1, 1], [1, 1]])],
+        possible_moves_true: Piece::get_all_moves_prev(vec![(4, array![[1, 1], [1, 1]])], true),
+        possible_moves_false: Piece::get_all_moves_prev(vec![(4, array![[1, 1], [1, 1]])], false),
     });
 
     static ref T_PIECE: Arc<Piece> = Arc::new(Piece {
         id: 2,
         bgr: [138, 41, 175],
         orientations: vec![(3, array![[0, 1, 0], [1, 1, 1]]), (4, array![[1, 0], [1, 1], [1, 0]]), (3, array![[1, 1, 1], [0, 1, 0]]), (3, array![[0, 1], [1, 1], [0, 1]])],
+        possible_moves_true: Piece::get_all_moves_prev(vec![(3, array![[0, 1, 0], [1, 1, 1]]), (4, array![[1, 0], [1, 1], [1, 0]]), (3, array![[1, 1, 1], [0, 1, 0]]), (3, array![[0, 1], [1, 1], [0, 1]])], true),
+        possible_moves_false: Piece::get_all_moves_prev(vec![(3, array![[0, 1, 0], [1, 1, 1]]), (4, array![[1, 0], [1, 1], [1, 0]]), (3, array![[1, 1, 1], [0, 1, 0]]), (3, array![[0, 1], [1, 1], [0, 1]])], false),
     });
 
     static ref S_PIECE: Arc<Piece> = Arc::new(Piece {
         id: 3,
         bgr: [1, 177, 89],
         orientations: vec![(3, array![[0, 1, 1], [1, 1, 0]]), (4, array![[1, 0], [1, 1], [0, 1]])],
+        possible_moves_true: Piece::get_all_moves_prev(vec![(3, array![[0, 1, 1], [1, 1, 0]]), (4, array![[1, 0], [1, 1], [0, 1]])], true),
+        possible_moves_false: Piece::get_all_moves_prev(vec![(3, array![[0, 1, 1], [1, 1, 0]]), (4, array![[1, 0], [1, 1], [0, 1]])], false),
     });
 
     static ref Z_PIECE: Arc<Piece> = Arc::new(Piece {
         id: 4,
         bgr: [55, 15, 215],
         orientations: vec![(3, array![[1, 1, 0], [0, 1, 1]]), (4, array![[0, 1], [1, 1], [1, 0]])],
+        possible_moves_true: Piece::get_all_moves_prev(vec![(3, array![[1, 1, 0], [0, 1, 1]]), (4, array![[0, 1], [1, 1], [1, 0]])], true),
+        possible_moves_false: Piece::get_all_moves_prev(vec![(3, array![[1, 1, 0], [0, 1, 1]]), (4, array![[0, 1], [1, 1], [1, 0]])], false),
     });
 
     static ref J_PIECE: Arc<Piece> = Arc::new(Piece {
         id: 5,
         bgr: [198, 65, 33],
         orientations: vec![(3, array![[1, 0, 0], [1, 1, 1]]), (4, array![[1, 1], [1, 0], [1, 0]]), (3, array![[1, 1, 1], [0, 0, 1]]), (3, array![[0, 1], [0, 1], [1, 1]])],
+        possible_moves_true: Piece::get_all_moves_prev(vec![(3, array![[1, 0, 0], [1, 1, 1]]), (4, array![[1, 1], [1, 0], [1, 0]]), (3, array![[1, 1, 1], [0, 0, 1]]), (3, array![[0, 1], [0, 1], [1, 1]])], true),
+        possible_moves_false: Piece::get_all_moves_prev(vec![(3, array![[1, 0, 0], [1, 1, 1]]), (4, array![[1, 1], [1, 0], [1, 0]]), (3, array![[1, 1, 1], [0, 0, 1]]), (3, array![[0, 1], [0, 1], [1, 1]])], false),
     });
 
     static ref L_PIECE: Arc<Piece> = Arc::new(Piece {
         id: 6,
         bgr: [2, 91, 227],
         orientations: vec![(3, array![[0, 0, 1], [1, 1, 1]]), (4, array![[1, 0], [1, 0], [1, 1]]), (3, array![[1, 1, 1], [1, 0, 0]]), (3, array![[1, 1], [0, 1], [0, 1]])],
+        possible_moves_true: Piece::get_all_moves_prev(vec![(3, array![[0, 0, 1], [1, 1, 1]]), (4, array![[1, 0], [1, 0], [1, 1]]), (3, array![[1, 1, 1], [1, 0, 0]]), (3, array![[1, 1], [0, 1], [0, 1]])], true),
+        possible_moves_false: Piece::get_all_moves_prev(vec![(3, array![[0, 0, 1], [1, 1, 1]]), (4, array![[1, 0], [1, 0], [1, 1]]), (3, array![[1, 1, 1], [1, 0, 0]]), (3, array![[1, 1], [0, 1], [0, 1]])], false),
     });
     static ref GRAY_BGR: Arc<[u8;3]> = Arc::new([153, 153, 153]);
     static ref FIELD: Mutex<Field> = Mutex::new(Field::new([0,0,0,0,0]));
     static ref GARBAGE_CALCULATION: Mutex<bool> = Mutex::new(false);
+    static ref TP: rayon::ThreadPool = rayon::ThreadPoolBuilder::new().num_threads(num_cpus::get()).build().unwrap();
 }
 
 // Game Setting Constants,
+static mut GARBAGE: AtomicBool = AtomicBool::new(false);
 static mut COLOR_THRESH: AtomicUsize = AtomicUsize::new(15);
 const MOVES_PER_THREAD: usize = 20;
 // Evaluation Constants
 static mut BOX_UNIT: AtomicUsize = AtomicUsize::new(24);
-static mut HOLE_COST: AtomicI32 = AtomicI32::new(10);
-static mut HOLE_HEIGHT_COST: AtomicI32 = AtomicI32::new(2);
-static mut LINE_VALUE: AtomicI32 = AtomicI32::new(25);
-static mut JAGGED_COST: AtomicI32 = AtomicI32::new(2);
-static mut HEIGHT_THRESHOLD: AtomicU8 = AtomicU8::new(8);
-static mut HEIGHT_COST: AtomicI32 = AtomicI32::new(4);
+static mut HOLE_COST: AtomicI32 = AtomicI32::new(106);
+static mut HOLE_HEIGHT_COST: AtomicI32 = AtomicI32::new(19);
+static mut LINE_VALUES: [AtomicI32; 4] = [AtomicI32::new(-11), AtomicI32::new(21), AtomicI32::new(47), AtomicI32::new(1600)];
+static mut JAGGED_COST: AtomicI32 = AtomicI32::new(6);
+static mut HEIGHT_THRESHOLD: AtomicU8 = AtomicU8::new(11);
+static mut HEIGHT_COST: AtomicI32 = AtomicI32::new(44);
 
 // Storing Pieces Constants
 static mut I_BLOCK: AtomicI32 = AtomicI32::new(2);
@@ -101,8 +118,15 @@ static mut Z_BLOCK: AtomicI32 = AtomicI32::new(0);
 static mut J_BLOCK: AtomicI32 = AtomicI32::new(0);
 static mut L_BLOCK: AtomicI32 = AtomicI32::new(0);
 
+
 fn get_gray_bgr() -> [u8; 3] {
     *Arc::clone(&GRAY_BGR)
+}
+
+fn get_garbage() -> bool {
+    unsafe {
+        GARBAGE.load(Ordering::Relaxed)
+    }
 }
 
 fn get_color_thresh() -> usize {
@@ -125,9 +149,9 @@ fn get_hole_height_cost() -> i32 {
         HOLE_HEIGHT_COST.load(Ordering::Relaxed)
     }
 }
-fn get_line_value() -> i32 {
+fn get_line_value(index: usize) -> i32 {
     unsafe {
-        LINE_VALUE.load(Ordering::Relaxed)
+        LINE_VALUES[index].load(Ordering::Relaxed)
     }
 }
 fn get_jagged_cost() -> i32 {
@@ -150,7 +174,7 @@ struct Field {
     field_state: Array::<u8, Ix2>,
     upcoming_pieces: [u8;5],
     stored_piece: Option<u8>,
-    value: f32,
+    value: f64,
     combo: u8,
     garbage_height: u8,
 }
@@ -258,24 +282,34 @@ impl Field {
         Field::clean_sent_lines(&mut f);
         Ok(f)
     }
-    fn eval_sent_lines(attack:usize) -> f32 {
+    fn eval_sent_lines(attack:usize, field: &mut Field) -> i32 {
         match attack {
-            0 => 0.0, 
-            1 => -0.5, 
-            2 | 3 => (attack - 1).pow(2) as f32,
-            4 => 16.0,
-            _ => (attack).pow(2) as f32, 
+            0 => 0, 
+            1 => {
+                get_line_value(0)
+            },
+            2 => {
+                get_line_value(1)
+            },
+            3 => {
+                get_line_value(2)
+            },
+            4 => {
+                get_line_value(3)
+            },
+            _ => {
+                100000
+            },
         }
     }
     fn clean_sent_lines(field: &mut Field){
         let mut count = 0;
         let blank = Array::<u8, Ix2>::zeros((1,10));
-        let h = 20 - field.garbage_height;
         for y in 0..20 {
             if field.field_state.slice(s![y, 0..10]).sum() == 10 {
                 count += 1;
                 field.field_state = stack![Axis(0), blank.view(), field.field_state.slice(s![0..y, 0..10]), field.field_state.slice(s![y + 1..20, 0..10])];
-                if y as usize >= h as usize {
+                if y as usize >= 20 - field.garbage_height as usize {
                     field.garbage_height -= 1;
                 }
             }
@@ -289,9 +323,8 @@ impl Field {
         else {
             field.combo = 0;
         }
-        field.value += get_line_value() as f32 * Field::eval_sent_lines(count) as f32;
     }
-    fn eval(&self) -> f32 {
+    fn eval(&self) -> i32 {
         let mut y_values = [0; 10];
         let mut height_costs = 0;
         let mut hole_count = 0;
@@ -306,8 +339,8 @@ impl Field {
                     height_found = true;
                     //height_sum += 20 - index;
                     y_values[x] = index;
-                    if (y_values[x] as u8) < (20 - get_height_threshold() as u8) {
-                        height_costs += 20 - y_values[x] - get_height_threshold() as usize;
+                    if (y_values[x] as u8) < (20 - get_height_threshold()) {
+                        height_costs += 20 - y_values[x] as u8 - get_height_threshold();
                     }
                 }
                 None => {
@@ -328,7 +361,7 @@ impl Field {
                 }
             }
         }
-        let score = -(get_jagged_cost() * jaggedness as i32 + get_hole_height_cost() * hole_value as i32 + get_hole_cost() * hole_count as i32 + get_height_cost() * height_costs as i32) as f32;
+        let score = -(get_jagged_cost() * jaggedness as i32 + get_hole_height_cost() * hole_value as i32 + get_hole_cost() * hole_count as i32 + (get_height_threshold() * height_costs) as i32);
         score
     }
     
@@ -338,10 +371,10 @@ impl Field {
             None
         }
         else {
-            let child_result = Arc::new(Mutex::new((0, f32::MIN)));
+            let child_result = Arc::new(Mutex::new((0, i32::MIN)));
             let piece = Piece::get_piece_from_id(self.upcoming_pieces[0]).unwrap();
             let mut handles = Vec::new();
-            let mut moves = if let Some(stored_piece) = self.stored_piece {
+            let moves = if let Some(stored_piece) = self.stored_piece {
                 let mut vec = piece.get_all_moves(false);
                 vec.append(&mut Piece::get_piece_from_id(stored_piece).unwrap().get_all_moves(true));
                 vec
@@ -372,17 +405,16 @@ impl Field {
             Some(moves[move_id])
         }
     }
-    fn calculate_all_resulting_fields_new(&self, depth: usize, stored: bool) -> Option<Move> {
+    fn calculate_all_resulting_fields_TP(&self, depth: usize, stored: bool) -> Option<Move> {
         if depth == 0 {
             println!("{}",self.eval());
             None
         }
         else {
-            let child_result = Arc::new(Mutex::new((0, f32::MIN)));
+            let child_result = Arc::new(Mutex::new((0, i32::MIN)));
             let piece = Piece::get_piece_from_id(self.upcoming_pieces[0]).unwrap();
-            let mut handles = Vec::new();
             let moves = if stored == true {if let Some(stored_piece) = self.stored_piece {
-                let mut vec = piece.get_all_moves(false);
+                let mut vec: Vec<Move> = piece.get_all_moves(false);
                 vec.append(&mut Piece::get_piece_from_id(stored_piece).unwrap().get_all_moves(true));
                 vec
             } else {
@@ -390,95 +422,70 @@ impl Field {
             }} else {
                 piece.get_all_moves(false)
             };
-            
             let original_depth = depth;
-            let overlap = moves.len() % MOVES_PER_THREAD;
-            let total_iterations = moves.len()/MOVES_PER_THREAD;
-            if total_iterations > 0 {
-                let mut moves_clone = moves.clone();
-                let extra = overlap/total_iterations;
-                let mut extra_extra = overlap % total_iterations;
-                //println!("overlap: {}", overlap);
-                //println!("len:{}", moves_clone.len());
-                let start = time::Instant::now(); 
-                for i in 0..total_iterations {
-                    let result_clone = Arc::clone(&child_result);
-                    //sets the number of moves that will be passed into the thread created for the current iteration
-                    let length = if extra_extra == 0 {
-                        MOVES_PER_THREAD + extra
-                    } else {
-                        extra_extra -= 1;
-                        MOVES_PER_THREAD + extra + 1
-                    };
-
-                    
-
-                    let field = self.clone();
-
-                    //for keeping track of move ids
-                    let moves_start_index = moves_clone.len() - length;
-                    
-                    //moves that will be passed into the thread for this iteration
-                    let tmp_moves = moves_clone.split_off(moves_start_index);
-                    //println!("len:{}", moves_clone.len());
-                    //overall mutex clone
-                    let result_clone = Arc::clone(&child_result);
-
-                    let piece = piece.clone();
-
-                    //spawn new thread
-                    let handle = thread::spawn(move || {
-                        let child_result_thread = Arc::new(Mutex::new((0, f32::MIN)));
-                        let mut child_handles = Vec::with_capacity(length);
-                        for i in 0..length {
-                            let child_result_clone = Arc::clone(&child_result_thread);
-                            let new_field = match Field::from(&field, &tmp_moves[i], &piece) {
-                                Ok(f) => f,
-                                Err(_) => continue,
-                            };
-                            let interior_handle = thread::spawn(move || {
-                                recursive_resulting_fields_new(new_field, depth - 1, moves_start_index + i, child_result_clone, original_depth)
-                            });
-                            child_handles.push(interior_handle);
-                        }
-                        for handle in child_handles {
-                            handle.join().unwrap();
-                        }
-                        let best_move = *child_result_thread.lock().unwrap();
-                        let mut max_eval = result_clone.lock().unwrap();
-                        if max_eval.1 < best_move.1 {
-                            *max_eval = best_move;
-                        }
-                    });
-                    handles.push(handle);
-                }
-            }
-            else {
+            let start = time::Instant::now();
+            
+            TP.install(|| {
+                rayon::scope(|s| {
+                    for i in 0..moves.len() {
+                        let field = match Field::from(self, &moves[i], &piece) {
+                            Ok(f) => f,
+                            Err(_e) => continue,
+                        };
+                        let result_clone = Arc::clone(&child_result);
+                        s.spawn(move |s| {
+                            recursive_resulting_fields_TP(field, depth - 1, i, result_clone, original_depth);
+                        })
+                    }
+                });
+                
+            });
+            //println!("initial thread creation time: {:?}", start.elapsed());
+            let start = time::Instant::now();  
+            //println!("finished: {:?}", start.elapsed());
+            let move_id = child_result.lock().unwrap().0;
+            Some(moves[move_id])
+        }
+    }
+    fn calculate_all_resulting_fields_scope(&self, depth: usize, stored: bool) -> Option<Move> {
+        if depth == 0 {
+            println!("{}",self.eval());
+            None
+        }
+        else {
+            let child_result = Arc::new(Mutex::new((0, i32::MIN)));
+            let piece = Piece::get_piece_from_id(self.upcoming_pieces[0]).unwrap();
+            let moves = if stored == true {if let Some(stored_piece) = self.stored_piece {
+                let mut vec: Vec<Move> = piece.get_all_moves(false);
+                vec.append(&mut Piece::get_piece_from_id(stored_piece).unwrap().get_all_moves(true));
+                vec
+            } else {
+                piece.get_all_moves(false)
+            }} else {
+                piece.get_all_moves(false)
+            };
+            let original_depth = depth;
+            
+            rayon::scope(|s| {
                 for i in 0..moves.len() {
                     let field = match Field::from(self, &moves[i], &piece) {
                         Ok(f) => f,
                         Err(_e) => continue,
                     };
                     let result_clone = Arc::clone(&child_result);
-                    let handle = thread::spawn(move || {
-                        recursive_resulting_fields(field, depth - 1, i, result_clone, original_depth);
-                    });
-                    handles.push(handle);
-                } 
-            }
-            
-            //println!("initial thread creation time: {:?}", start.elapsed());
-            let start = time::Instant::now();  
-            for handle in handles {
-                handle.join().expect("heck I died lol");
-            }
-            //println!("finished: {:?}", start.elapsed());
+                    s.spawn(move |_| {
+                        recursive_resulting_fields_TP(field, depth - 1, i, result_clone, original_depth);
+                    })
+                }
+            });
+
             let move_id = child_result.lock().unwrap().0;
             Some(moves[move_id])
         }
     }
 }
-fn recursive_resulting_fields(f: Field, depth: usize, move_id: usize, result: Arc<Mutex<(usize, f32)>>, original_depth: usize) {
+
+fn recursive_resulting_fields_TP(f: Field, depth: usize, move_id: usize, result: Arc<Mutex<(usize, i32)>>, original_depth: usize) {
     if depth == 0 {
         let eval = f.eval();
         let mut max_eval = result.lock().unwrap();
@@ -491,7 +498,50 @@ fn recursive_resulting_fields(f: Field, depth: usize, move_id: usize, result: Ar
     }
     else {
         let start = time::Instant::now();
-        let child_result = Arc::new(Mutex::new((0, f32::MIN)));
+        let child_result = Arc::new(Mutex::new((0, i32::MIN)));
+        let piece = Piece::get_piece_from_id(f.upcoming_pieces[original_depth - depth]).unwrap();
+
+        rayon::scope(|s| {
+            for m in if let Some(stored_piece) = f.stored_piece {
+                let mut vec = piece.get_all_moves(false);
+                vec.append(&mut Piece::get_piece_from_id(stored_piece).unwrap().get_all_moves(true));
+                vec
+            }
+            else {
+                piece.get_all_moves(false)
+            } {
+                let field = match Field::from(&f, &m, &piece) {
+                    Ok(f) => f,
+                    Err(_e) => continue,
+                };
+                let result_clone = Arc::clone(&child_result);
+                s.spawn(move |s| {
+                    recursive_resulting_fields_TP(field, depth - 1, move_id, result_clone, original_depth);
+                })
+            }
+        });
+        //println!("thread creation time: {:?}", start.elapsed());    
+        let mut max_eval = result.lock().unwrap();
+        let child_result = child_result.lock().unwrap().1;
+        if max_eval.1 < child_result {
+            *max_eval = (move_id, child_result);
+        }
+    }
+}
+fn recursive_resulting_fields(f: Field, depth: usize, move_id: usize, result: Arc<Mutex<(usize, i32)>>, original_depth: usize) {
+    if depth == 0 {
+        let eval = f.eval();
+        let mut max_eval = result.lock().unwrap();
+        //println!("{},{}",move_id, eval);
+        //println!("{}", f);
+        if max_eval.1 < eval {
+            *max_eval = (move_id, eval);
+            //println!("{},{}",move_id, eval);
+        }
+    }
+    else {
+        let start = time::Instant::now();
+        let child_result = Arc::new(Mutex::new((0, i32::MIN)));
         let piece = Piece::get_piece_from_id(f.upcoming_pieces[original_depth - depth]).unwrap();
         let mut handles = Vec::new();
         for m in if let Some(stored_piece) = f.stored_piece {
@@ -524,114 +574,6 @@ fn recursive_resulting_fields(f: Field, depth: usize, move_id: usize, result: Ar
     }
 }
 
-fn recursive_resulting_fields_new(f: Field, depth: usize, move_id: usize, result: Arc<Mutex<(usize, f32)>>, original_depth: usize) {
-    if depth == 0 {
-        let eval = f.eval();
-        let mut max_eval = result.lock().unwrap();
-        //println!("{},{}",move_id, eval);
-        //println!("{}", f);
-        if max_eval.1 < eval {
-            *max_eval = (move_id, eval);
-            //println!("{},{}",move_id, eval);
-        }
-    }
-    else {
-        let start = time::Instant::now();
-        let child_result = Arc::new(Mutex::new((0, f32::MIN)));
-        let piece = Piece::get_piece_from_id(f.upcoming_pieces[original_depth - depth]).unwrap();
-
-        let moves = if let Some(stored_piece) = f.stored_piece {
-            let mut vec = piece.get_all_moves(false);
-            vec.append(&mut Piece::get_piece_from_id(stored_piece).unwrap().get_all_moves(true));
-            vec
-        }
-        else {
-            piece.get_all_moves(false)
-        };
-        let mut handles = Vec::new();
-        
-        let mut overlap = moves.len() % MOVES_PER_THREAD;
-        let total_iterations = moves.len()/MOVES_PER_THREAD;
-        if total_iterations > 0 {
-            let extra = overlap/total_iterations;
-            let mut extra_extra = overlap % total_iterations;
-            let mut moves_clone = moves.clone();
-
-            
-            for i in 0..total_iterations {
-                let result_clone = Arc::clone(&child_result);
-                //sets the number of moves that will be passed into the thread created for the current iteration
-                let length = if extra_extra == 0 {
-                    MOVES_PER_THREAD + extra
-                } else {
-                    extra_extra -= 1;
-                    MOVES_PER_THREAD + extra + 1
-                };
-
-                let field = f.clone();
-
-                //for keeping track of move ids
-                let moves_start_index = moves_clone.len() - length;
-                
-                //moves that will be passed into the thread for this iteration
-                let tmp_moves = moves_clone.split_off(moves_start_index);
-
-                //overall mutex clone
-                let result_clone = Arc::clone(&child_result);
-
-                let piece = piece.clone();
-
-                //spawn new thread
-                let handle = thread::spawn(move || {
-                    let child_result_thread = Arc::new(Mutex::new((0, f32::MIN)));
-                    let mut child_handles = Vec::with_capacity(length);
-                    for i in 0..length {
-                        let child_result_clone = Arc::clone(&child_result_thread);
-                        let new_field = match Field::from(&field, &tmp_moves[i], &piece) {
-                            Ok(f) => f,
-                            Err(_) => continue,
-                        };
-                        let interior_handle = thread::spawn(move || {
-                            recursive_resulting_fields_new(new_field, depth - 1, moves_start_index + i, child_result_clone, original_depth)
-                        });
-                        child_handles.push(interior_handle);
-                    }
-                    for handle in child_handles {
-                        handle.join().unwrap();
-                    }
-                    let best_move = *child_result_thread.lock().unwrap();
-                    let mut max_eval = result_clone.lock().unwrap();
-                    if max_eval.1 < best_move.1 {
-                        *max_eval = best_move;
-                    }
-                });
-                handles.push(handle);
-            }
-        }
-        else {
-            for m in moves {
-                let field = match Field::from(&f, &m, &piece) {
-                    Ok(f) => f,
-                    Err(_e) => continue,
-                };
-                let result_clone = Arc::clone(&child_result);
-                let handle = thread::spawn(move || {
-                    recursive_resulting_fields(field, depth - 1, move_id, result_clone, original_depth);
-                });
-                handles.push(handle);
-            }
-        }
-        //println!("thread creation time: {:?}", start.elapsed());    
-        for handle in handles {
-            handle.join().unwrap();
-        }
-        let mut max_eval = result.lock().unwrap();
-        let child_result = child_result.lock().unwrap().1;
-        if max_eval.1 < child_result {
-            *max_eval = (move_id, child_result);
-        }
-    }
-}
 
 impl Display for Field {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -675,6 +617,8 @@ struct Piece {
     bgr: [u8;3],
     //Orientation: how many blocks from left, matrix representing dimensions
     orientations: Vec<(i8, Array2::<u8>)>,
+    possible_moves_false: Vec<Move>,
+    possible_moves_true: Vec<Move>,
 }
 
 impl Piece {
@@ -682,6 +626,19 @@ impl Piece {
         let mut moves = Vec::new();
         for i in 0..self.orientations.len() {
             for x in -self.orientations[i].0..(10 - self.orientations[i].1.shape()[1] as i8 - self.orientations[i].0 + 1) {
+                moves.push(Move {
+                    rotation: i as u8,
+                    position: x,
+                    store,
+                })
+            }
+        }
+        moves
+    }
+    fn get_all_moves_prev(orientations: Vec<(i8, Array2::<u8>)>, store: bool) -> Vec<Move> {
+        let mut moves = Vec::new();
+        for i in 0..orientations.len() {
+            for x in -orientations[i].0..(10 - orientations[i].1.shape()[1] as i8 - orientations[i].0 + 1) {
                 moves.push(Move {
                     rotation: i as u8,
                     position: x,
@@ -707,95 +664,87 @@ impl Piece {
 
 
 fn track_garbage(img: ArrayViewD<u8>) {
-    {
-        *GARBAGE_CALCULATION.lock().unwrap() = true;
-    }
     let img = img.to_owned();
-    thread::spawn(move || {
-        let mut garbage_map = Array::<u8, Ix2>::zeros((0,10));
-        for y in 0..20 {
-            let mut gray = false;
-            let mut row = Array::<u8, Ix2>::zeros((1,10));
-            for x in 0..10 {
-                if x > 1 && !gray {
-                    break;
-                }
-                if compare_colors(&img.slice(s![(19 - y) * get_box_unit(), x * get_box_unit(), ..]).to_vec(), get_gray_bgr()) < get_color_thresh() {
-                    gray = true;
-                    row[[0, x]] = 1;
-                }
-                else {
-                    row[[0, x]] = 0;
-                }
-            };
-            if gray {
-                garbage_map = stack![Axis(0), row, garbage_map];
-            }
-            else {
+    let mut garbage_map = Array::<u8, Ix2>::zeros((0,10));
+    for y in 0..20 {
+        let mut gray = false;
+        let mut row = Array::<u8, Ix2>::zeros((1,10));
+        for x in 0..10 {
+            if x > 1 && !gray {
                 break;
             }
-        }  
-        if !garbage_map.is_empty() {
-            let mut field = &mut *FIELD.lock().unwrap();
-            if field.garbage_height > 0 {
-                let top_garbage_row = match field.field_state.slice(s![20 - field.garbage_height as usize, ..]).into_iter().position(|&x| x == 0) {
-                    Some(i) => i,
-                    None => panic!("this isn't a garbage row nani"),
-                };
-                let mut count = 0;
-                for row in 0..garbage_map.shape()[0] {
-                    if garbage_map.slice(s![row, ..]).into_iter().position(|&x| x == 0) == Some(top_garbage_row) {
-                        field.field_state = stack![Axis(0), field.field_state.slice(s![garbage_map.shape()[0] - field.garbage_height as usize - row..20, ..]), garbage_map.slice(s![row + field.garbage_height as usize..,..])];
-                        field.garbage_height = (garbage_map.shape()[0] - row) as u8;
-                        break;
-                    } 
-                    if count > 3 {
-                        field.field_state = stack![Axis(0), field.field_state.slice(s![garbage_map.shape()[0].., ..]), garbage_map];
-                        field.garbage_height = garbage_map.shape()[0] as u8;
-                        break;
-                    }
-                    count += 1;
-                }
+            if compare_colors(&img.slice(s![(19 - y) * get_box_unit(), x * get_box_unit(), ..]).to_vec(), get_gray_bgr()) < get_color_thresh() {
+                gray = true;
+                row[[0, x]] = 1;
             }
             else {
-                println!("added {}", garbage_map.shape()[0]);
-                field.field_state = stack![Axis(0), field.field_state.slice(s![garbage_map.shape()[0].., ..]), garbage_map];
-                field.garbage_height = garbage_map.shape()[0] as u8;
+                row[[0, x]] = 0;
             }
+        };
+        if gray {
+            garbage_map = stack![Axis(0), row, garbage_map];
         }
-        {
-            *GARBAGE_CALCULATION.lock().unwrap() = false;
+        else {
+            break;
         }
-    });
+    }  
+    if !garbage_map.is_empty() {
+        let mut field = &mut *FIELD.lock().unwrap();
+        if garbage_map.shape()[0] as u8 >= field.garbage_height {
+            field.field_state = stack![Axis(0), field.field_state.slice(s![garbage_map.shape()[0] - field.garbage_height as usize..20 - field.garbage_height as usize, ..]), garbage_map];
+        }
+        else {
+            let zeros = Array::<u8, Ix2>::zeros((field.garbage_height as usize - garbage_map.shape()[0], 10));
+            field.field_state = stack![Axis(0), zeros, field.field_state.slice(s![0..20-field.garbage_height as usize, ..]), garbage_map];
+        }
+        field.garbage_height = garbage_map.shape()[0] as u8;
+    }
+    else {
+        let mut field = &mut *FIELD.lock().unwrap();
+        field.field_state = stack![Axis(0), field.field_state.slice(s![garbage_map.shape()[0].., ..]), garbage_map];
+        field.garbage_height = garbage_map.shape()[0] as u8;
+    }
 }
 
 #[pyfunction]
 fn get_next_move(_py: Python, img: PyReadonlyArrayDyn<u8>, depth: usize, stored: bool) -> (u8, i8, bool) {
-    
-    let mut field = &mut *FIELD.lock().unwrap();
     let img = img.as_array();
     let mut pieces: [u8; 5] = [0; 5];
-    for i in 0..4 {
-        pieces[i] = field.upcoming_pieces[i + 1];
-    }
-    match rust_identify_piece(img.slice(s![(get_box_unit() as f32 * (1.5 + 4.0 * 3.0)).round() as usize, (get_box_unit() as f32 * 12.5).round() as usize,..]).into_iter().cloned().collect()) {
-        None => match rust_identify_piece(img.slice(s![(get_box_unit() as f32 * (2.5 + 4.0 as f32 * 3.0)).round() as usize, (get_box_unit() as f32 * 12.5).round() as usize,..]).into_iter().cloned().collect()) {
+    match rust_identify_piece(img.slice(s![(get_box_unit() as f64 * (1.5 + 4.0 * 3.0)).round() as usize, (get_box_unit() as f64 * 12.5).round() as usize,..]).into_iter().cloned().collect()) {
+        None => match rust_identify_piece(img.slice(s![(get_box_unit() as f64 * (2.5 + 4.0 as f64 * 3.0)).round() as usize, (get_box_unit() as f64 * 12.5).round() as usize,..]).into_iter().cloned().collect()) {
             None => panic!("smh"),
             Some(piece_id) => pieces[4] = piece_id as u8,
         },
         Some(piece_id) => pieces[4] = piece_id as u8,
     }
-    let m = match field.calculate_all_resulting_fields_new(depth, stored){Some(m) => m, None => panic!("smh. your life has 0 depth")};
-    let new_field = Field::from(&field, &m, &Piece::get_piece_from_id(field.upcoming_pieces[0]).unwrap()).unwrap();
-    field.field_state = new_field.field_state;
-    field.upcoming_pieces = pieces;
-    field.stored_piece = new_field.stored_piece;
-    field.garbage_height = new_field.garbage_height;
-    //println!("{}", field);
-    if !*GARBAGE_CALCULATION.lock().unwrap() {
+    if get_garbage() {
         track_garbage(img);
     }
-    (m.rotation, m.position, m.store)
+    let m = Arc::new(Mutex::new(Move::from((0, 0, false))));
+    let move_arc = Arc::clone(&m);
+    TP.install(|| {
+        rayon::scope(|s| {
+            
+            s.spawn(move |_| {
+                let mut field = &mut *FIELD.lock().unwrap();
+                for i in 0..4 {
+                    pieces[i] = field.upcoming_pieces[i + 1];
+                }
+                let mut mov = move_arc.lock().unwrap();
+                *mov = match field.calculate_all_resulting_fields_scope(depth, stored){Some(m) => m, None => panic!("smh. your life has 0 depth")};
+                let new_field = Field::from(&field, &mov, &Piece::get_piece_from_id(field.upcoming_pieces[0]).unwrap()).unwrap();
+                field.field_state = new_field.field_state;
+                field.upcoming_pieces = pieces;
+                field.stored_piece = new_field.stored_piece;
+                println!("field: {}", field);
+            });
+        });
+    });
+    
+    
+    
+    let mov = m.lock().unwrap();
+    (mov.rotation, mov.position, mov.store)
 }
 
 //used at the beginning of the program to init
@@ -842,8 +791,8 @@ fn get_upcoming_pieces(_py: Python, fullscr_img: PyReadonlyArrayDyn<u8>, box_uni
     let fullscr_img = fullscr_img.as_array();
     let mut pieces = Vec::with_capacity(5);
     for i in 0..5 {
-        match rust_identify_piece(fullscr_img.slice(s![(box_unit as f32 * (1.5 + i as f32 * 3.0)).round() as usize, (box_unit as f32 * 12.5).round() as usize,..]).into_iter().cloned().collect()) {
-            None => match rust_identify_piece(fullscr_img.slice(s![(box_unit as f32 * (2.5 + i as f32 * 3.0)).round() as usize, (box_unit as f32 * 12.5).round() as usize,..]).into_iter().cloned().collect()) {
+        match rust_identify_piece(fullscr_img.slice(s![(box_unit as f64 * (1.5 + i as f64 * 3.0)).round() as usize, (box_unit as f64 * 12.5).round() as usize,..]).into_iter().cloned().collect()) {
+            None => match rust_identify_piece(fullscr_img.slice(s![(box_unit as f64 * (2.5 + i as f64 * 3.0)).round() as usize, (box_unit as f64 * 12.5).round() as usize,..]).into_iter().cloned().collect()) {
                 None => panic!("smh"),
                 Some(piece_id) => pieces.push(piece_id),
             },
@@ -870,14 +819,18 @@ fn get_corner_coords(_py: Python, fullscr_img: PyReadonlyArrayDyn<u8>, corner_im
 }
 
 //Functions for setting global variables
-
+#[pyfunction]
+fn set_garbage(b: bool) {
+    unsafe {
+        *GARBAGE.get_mut() = b;
+    }
+}
 #[pyfunction]
 fn set_color_thresh(i: usize) {
     unsafe {
         *COLOR_THRESH.get_mut() = i;
     }
 }
-
 #[pyfunction] 
 fn set_hole_cost(i: i32) {
     unsafe {
@@ -890,12 +843,14 @@ fn set_hole_height_cost(i: i32) {
         *HOLE_HEIGHT_COST.get_mut() = i;
     }
 }
-#[pyfunction] 
-fn set_line_value(i: i32) {
-    unsafe {
-        *LINE_VALUE.get_mut() = i;
+/*#[pyfunction] 
+fn set_line_value(list: [i32;4]) {
+    for i in 0..4 {
+        unsafe {
+            *LINE_VALUES[i].get_mut() = list;
+        }
     }
-}
+}*/
 #[pyfunction] 
 fn set_jagged_cost(i: i32) {
     unsafe {
@@ -918,6 +873,7 @@ fn set_height_cost(i: i32) {
 
 #[pymodule]
 fn tetris_logic(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
+    m.add_wrapped(wrap_pyfunction!(set_garbage))?;
     m.add_wrapped(wrap_pyfunction!(get_upcoming_pieces))?;
     m.add_wrapped(wrap_pyfunction!(get_corner_coords))?;
     m.add_wrapped(wrap_pyfunction!(identify_piece))?;
@@ -926,7 +882,7 @@ fn tetris_logic(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_wrapped(wrap_pyfunction!(set_stored_piece))?;
     m.add_wrapped(wrap_pyfunction!(set_hole_cost))?;
     m.add_wrapped(wrap_pyfunction!(set_hole_height_cost))?;
-    m.add_wrapped(wrap_pyfunction!(set_line_value))?;
+    //m.add_wrapped(wrap_pyfunction!(set_line_value))?;
     m.add_wrapped(wrap_pyfunction!(set_jagged_cost))?;
     m.add_wrapped(wrap_pyfunction!(set_height_threshold))?;
     m.add_wrapped(wrap_pyfunction!(set_height_cost))?;

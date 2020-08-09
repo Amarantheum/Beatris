@@ -334,11 +334,11 @@ fn ga_constant<'a> (constants: &'a OptimizationConstants, constant_index: i8, s:
             constants_neg = constants.update_combo_value(-TEST_STEP);
         }
         9 => {
-            constants_pos = match constants.update_height_threshold(TEST_STEP as i8) {
+            constants_pos = match constants.update_height_threshold(1) {
                 Err(_) => constants.update_height_threshold(0).unwrap(),
                 Ok(v) => v,
             };
-            constants_neg = match constants.update_height_threshold(-TEST_STEP as i8) {
+            constants_neg = match constants.update_height_threshold(-1) {
                 Err(_) => constants.update_height_threshold(0).unwrap(),
                 Ok(v) => v,
             };
