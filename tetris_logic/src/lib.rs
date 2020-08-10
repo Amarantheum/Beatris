@@ -33,6 +33,8 @@ const BLANK_BGR: [u8; 3] = [0, 0, 0];
 //const GRAY_BGR: [u8; 3] = [106, 106, 106];
 const PIECE_BGR_VALUES:[[u8;3];7] = [I_BGR, O_BGR, T_BGR, S_BGR, Z_BGR, J_BGR, L_BGR];
 
+const PIECE_STORED_VALUES:[i32;7] = [40, 0, 0, 0, 0, 0, 0];
+
 
 lazy_static! {
     static ref I_PIECE: Arc<Piece> = Arc::new(Piece {
@@ -41,6 +43,8 @@ lazy_static! {
         orientations: vec![(3, array![[1,1,1,1]]), (5, array![[1], [1], [1], [1]])],
         possible_moves_true: Piece::get_all_moves_prev(vec![(3, array![[1,1,1,1]]), (5, array![[1], [1], [1], [1]])], true),
         possible_moves_false: Piece::get_all_moves_prev(vec![(3, array![[1,1,1,1]]), (5, array![[1], [1], [1], [1]])], false),
+
+        stored_value: PIECE_STORED_VALUES[0],
     });
 
     static ref O_PIECE: Arc<Piece> = Arc::new(Piece {
@@ -49,6 +53,8 @@ lazy_static! {
         orientations: vec![(4, array![[1, 1], [1, 1]])],
         possible_moves_true: Piece::get_all_moves_prev(vec![(4, array![[1, 1], [1, 1]])], true),
         possible_moves_false: Piece::get_all_moves_prev(vec![(4, array![[1, 1], [1, 1]])], false),
+
+        stored_value: PIECE_STORED_VALUES[1],
     });
 
     static ref T_PIECE: Arc<Piece> = Arc::new(Piece {
@@ -57,6 +63,8 @@ lazy_static! {
         orientations: vec![(3, array![[0, 1, 0], [1, 1, 1]]), (4, array![[1, 0], [1, 1], [1, 0]]), (3, array![[1, 1, 1], [0, 1, 0]]), (3, array![[0, 1], [1, 1], [0, 1]])],
         possible_moves_true: Piece::get_all_moves_prev(vec![(3, array![[0, 1, 0], [1, 1, 1]]), (4, array![[1, 0], [1, 1], [1, 0]]), (3, array![[1, 1, 1], [0, 1, 0]]), (3, array![[0, 1], [1, 1], [0, 1]])], true),
         possible_moves_false: Piece::get_all_moves_prev(vec![(3, array![[0, 1, 0], [1, 1, 1]]), (4, array![[1, 0], [1, 1], [1, 0]]), (3, array![[1, 1, 1], [0, 1, 0]]), (3, array![[0, 1], [1, 1], [0, 1]])], false),
+        
+        stored_value: PIECE_STORED_VALUES[2],
     });
 
     static ref S_PIECE: Arc<Piece> = Arc::new(Piece {
@@ -65,6 +73,8 @@ lazy_static! {
         orientations: vec![(3, array![[0, 1, 1], [1, 1, 0]]), (4, array![[1, 0], [1, 1], [0, 1]])],
         possible_moves_true: Piece::get_all_moves_prev(vec![(3, array![[0, 1, 1], [1, 1, 0]]), (4, array![[1, 0], [1, 1], [0, 1]])], true),
         possible_moves_false: Piece::get_all_moves_prev(vec![(3, array![[0, 1, 1], [1, 1, 0]]), (4, array![[1, 0], [1, 1], [0, 1]])], false),
+        
+        stored_value: PIECE_STORED_VALUES[3],
     });
 
     static ref Z_PIECE: Arc<Piece> = Arc::new(Piece {
@@ -73,6 +83,8 @@ lazy_static! {
         orientations: vec![(3, array![[1, 1, 0], [0, 1, 1]]), (4, array![[0, 1], [1, 1], [1, 0]])],
         possible_moves_true: Piece::get_all_moves_prev(vec![(3, array![[1, 1, 0], [0, 1, 1]]), (4, array![[0, 1], [1, 1], [1, 0]])], true),
         possible_moves_false: Piece::get_all_moves_prev(vec![(3, array![[1, 1, 0], [0, 1, 1]]), (4, array![[0, 1], [1, 1], [1, 0]])], false),
+
+        stored_value: PIECE_STORED_VALUES[4],
     });
 
     static ref J_PIECE: Arc<Piece> = Arc::new(Piece {
@@ -81,6 +93,8 @@ lazy_static! {
         orientations: vec![(3, array![[1, 0, 0], [1, 1, 1]]), (4, array![[1, 1], [1, 0], [1, 0]]), (3, array![[1, 1, 1], [0, 0, 1]]), (3, array![[0, 1], [0, 1], [1, 1]])],
         possible_moves_true: Piece::get_all_moves_prev(vec![(3, array![[1, 0, 0], [1, 1, 1]]), (4, array![[1, 1], [1, 0], [1, 0]]), (3, array![[1, 1, 1], [0, 0, 1]]), (3, array![[0, 1], [0, 1], [1, 1]])], true),
         possible_moves_false: Piece::get_all_moves_prev(vec![(3, array![[1, 0, 0], [1, 1, 1]]), (4, array![[1, 1], [1, 0], [1, 0]]), (3, array![[1, 1, 1], [0, 0, 1]]), (3, array![[0, 1], [0, 1], [1, 1]])], false),
+
+        stored_value: PIECE_STORED_VALUES[5],
     });
 
     static ref L_PIECE: Arc<Piece> = Arc::new(Piece {
@@ -89,6 +103,8 @@ lazy_static! {
         orientations: vec![(3, array![[0, 0, 1], [1, 1, 1]]), (4, array![[1, 0], [1, 0], [1, 1]]), (3, array![[1, 1, 1], [1, 0, 0]]), (3, array![[1, 1], [0, 1], [0, 1]])],
         possible_moves_true: Piece::get_all_moves_prev(vec![(3, array![[0, 0, 1], [1, 1, 1]]), (4, array![[1, 0], [1, 0], [1, 1]]), (3, array![[1, 1, 1], [1, 0, 0]]), (3, array![[1, 1], [0, 1], [0, 1]])], true),
         possible_moves_false: Piece::get_all_moves_prev(vec![(3, array![[0, 0, 1], [1, 1, 1]]), (4, array![[1, 0], [1, 0], [1, 1]]), (3, array![[1, 1, 1], [1, 0, 0]]), (3, array![[1, 1], [0, 1], [0, 1]])], false),
+
+        stored_value: PIECE_STORED_VALUES[6],
     });
     static ref GRAY_BGR: Arc<[u8;3]> = Arc::new([153, 153, 153]);
     static ref FIELD: Mutex<Field> = Mutex::new(Field::new([0,0,0,0,0]));
@@ -108,6 +124,8 @@ static mut LINE_VALUES: [AtomicI32; 4] = [AtomicI32::new(-11), AtomicI32::new(21
 static mut JAGGED_COST: AtomicI32 = AtomicI32::new(6);
 static mut HEIGHT_THRESHOLD: AtomicU8 = AtomicU8::new(11);
 static mut HEIGHT_COST: AtomicI32 = AtomicI32::new(44);
+static mut COMBO_VALUE: AtomicI32 = AtomicI32::new(20);
+
 
 // Storing Pieces Constants
 static mut I_BLOCK: AtomicI32 = AtomicI32::new(2);
@@ -117,6 +135,8 @@ static mut S_BLOCK: AtomicI32 = AtomicI32::new(0);
 static mut Z_BLOCK: AtomicI32 = AtomicI32::new(0);
 static mut J_BLOCK: AtomicI32 = AtomicI32::new(0);
 static mut L_BLOCK: AtomicI32 = AtomicI32::new(0);
+
+static mut GARBAGE_DIFF: usize = 0;
 
 
 fn get_gray_bgr() -> [u8; 3] {
@@ -169,12 +189,18 @@ fn get_height_cost() -> i32 {
         HEIGHT_COST.load(Ordering::Relaxed)
     }
 }
+
+fn get_combo_value() -> i32 {
+    unsafe {
+        COMBO_VALUE.load(Ordering::Relaxed)
+    }
+}
 #[derive(Clone)]
 struct Field {
     field_state: Array::<u8, Ix2>,
     upcoming_pieces: [u8;5],
     stored_piece: Option<u8>,
-    value: f64,
+    value: i32,
     combo: u8,
     garbage_height: u8,
 }
@@ -186,7 +212,7 @@ impl Field {
             // Create a three-dimensional f64 array, initialized with zeros
             upcoming_pieces,
             stored_piece: None,
-            value: 0.0,
+            value: 0,
             combo: 0,
             garbage_height: 0,
         }
@@ -194,11 +220,13 @@ impl Field {
     fn from<'a>(prior_field: &Field, new_move: &Move, new_piece: &Piece) -> Result<Field, &'a str> {
         let tmp2;
         let mut new_piece = new_piece;
+        let mut stored_piece_value = 0;
         let stored_piece = if new_move.store == true {
             match prior_field.stored_piece {
                 Some(p) => {
                     let tmp = new_piece.id;
                     tmp2 = Piece::get_piece_from_id(p).unwrap().clone();
+                    stored_piece_value = tmp2.stored_value - new_piece.stored_value;
                     new_piece = &tmp2;
                     Some(tmp)
                 }
@@ -279,6 +307,7 @@ impl Field {
             combo: prior_field.combo.clone(),
             garbage_height: prior_field.garbage_height.clone(),
         };
+        f.value += stored_piece_value;
         Field::clean_sent_lines(&mut f);
         Ok(f)
     }
@@ -319,10 +348,12 @@ impl Field {
         }
         if count != 0 {
             field.combo += 1;
+            field.value += get_combo_value();
         }
         else {
             field.combo = 0;
         }
+        field.value += Field::eval_sent_lines(count, field);
     }
     fn eval(&self) -> i32 {
         let mut y_values = [0; 10];
@@ -361,7 +392,7 @@ impl Field {
                 }
             }
         }
-        let score = -(get_jagged_cost() * jaggedness as i32 + get_hole_height_cost() * hole_value as i32 + get_hole_cost() * hole_count as i32 + (get_height_threshold() * height_costs) as i32);
+        let score = -(get_jagged_cost() * jaggedness as i32 + get_hole_height_cost() * hole_value as i32 + get_hole_cost() * hole_count as i32 + (get_height_threshold() * height_costs) as i32) + self.value;
         score
     }
     
@@ -619,6 +650,8 @@ struct Piece {
     orientations: Vec<(i8, Array2::<u8>)>,
     possible_moves_false: Vec<Move>,
     possible_moves_true: Vec<Move>,
+
+    stored_value: i32,
 }
 
 impl Piece {
@@ -659,6 +692,9 @@ impl Piece {
             6 => Ok(Arc::clone(&L_PIECE)),
             _ => Err("Specified piece id does not exist!"),
         }
+    }
+    fn get_stored_value(&self) -> i32 {
+        self.stored_value
     }
 }
 
@@ -701,8 +737,9 @@ fn track_garbage(img: ArrayViewD<u8>) {
     }
     else {
         let mut field = &mut *FIELD.lock().unwrap();
-        field.field_state = stack![Axis(0), field.field_state.slice(s![garbage_map.shape()[0].., ..]), garbage_map];
-        field.garbage_height = garbage_map.shape()[0] as u8;
+        field.garbage_height = 0;
+        //field.field_state = stack![Axis(0), field.field_state.slice(s![garbage_map.shape()[0].., ..]), garbage_map];
+        //field.garbage_height = garbage_map.shape()[0] as u8;
     }
 }
 
@@ -720,31 +757,21 @@ fn get_next_move(_py: Python, img: PyReadonlyArrayDyn<u8>, depth: usize, stored:
     if get_garbage() {
         track_garbage(img);
     }
-    let m = Arc::new(Mutex::new(Move::from((0, 0, false))));
-    let move_arc = Arc::clone(&m);
-    TP.install(|| {
-        rayon::scope(|s| {
-            
-            s.spawn(move |_| {
-                let mut field = &mut *FIELD.lock().unwrap();
-                for i in 0..4 {
-                    pieces[i] = field.upcoming_pieces[i + 1];
-                }
-                let mut mov = move_arc.lock().unwrap();
-                *mov = match field.calculate_all_resulting_fields_scope(depth, stored){Some(m) => m, None => panic!("smh. your life has 0 depth")};
-                let new_field = Field::from(&field, &mov, &Piece::get_piece_from_id(field.upcoming_pieces[0]).unwrap()).unwrap();
-                field.field_state = new_field.field_state;
-                field.upcoming_pieces = pieces;
-                field.stored_piece = new_field.stored_piece;
-                println!("field: {}", field);
-            });
-        });
-    });
+    let mut field = &mut *FIELD.lock().unwrap();
+    for i in 0..4 {
+        pieces[i] = field.upcoming_pieces[i + 1];
+    }
+    let m = match field.calculate_all_resulting_fields_TP(depth, stored){Some(m) => m, None => panic!("smh. your life has 0 depth")};
+    let new_field = Field::from(&field, &m, &Piece::get_piece_from_id(field.upcoming_pieces[0]).unwrap()).unwrap();
+    field.field_state = new_field.field_state;
+    field.upcoming_pieces = pieces;
+    field.stored_piece = new_field.stored_piece;
+    field.garbage_height = new_field.garbage_height;
+    field.combo = new_field.combo;
     
     
-    
-    let mov = m.lock().unwrap();
-    (mov.rotation, mov.position, mov.store)
+
+    (m.rotation, m.position, m.store)
 }
 
 //used at the beginning of the program to init
@@ -843,14 +870,12 @@ fn set_hole_height_cost(i: i32) {
         *HOLE_HEIGHT_COST.get_mut() = i;
     }
 }
-/*#[pyfunction] 
-fn set_line_value(list: [i32;4]) {
-    for i in 0..4 {
-        unsafe {
-            *LINE_VALUES[i].get_mut() = list;
-        }
+#[pyfunction] 
+fn set_line_value(index: usize, value: i32) {
+    unsafe {
+        *LINE_VALUES[index].get_mut() = value;
     }
-}*/
+}
 #[pyfunction] 
 fn set_jagged_cost(i: i32) {
     unsafe {
@@ -882,7 +907,7 @@ fn tetris_logic(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_wrapped(wrap_pyfunction!(set_stored_piece))?;
     m.add_wrapped(wrap_pyfunction!(set_hole_cost))?;
     m.add_wrapped(wrap_pyfunction!(set_hole_height_cost))?;
-    //m.add_wrapped(wrap_pyfunction!(set_line_value))?;
+    m.add_wrapped(wrap_pyfunction!(set_line_value))?;
     m.add_wrapped(wrap_pyfunction!(set_jagged_cost))?;
     m.add_wrapped(wrap_pyfunction!(set_height_threshold))?;
     m.add_wrapped(wrap_pyfunction!(set_height_cost))?;

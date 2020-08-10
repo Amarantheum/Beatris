@@ -14,16 +14,25 @@ monitor = Tk()
 
 #time.sleep(3) #For testing 
 
+tetris_logic.set_line_value(0, -100)
+tetris_logic.set_line_value(1, -30)
+tetris_logic.set_line_value(2, 0)
+tetris_logic.set_line_value(3, 1600)
+
 #global variables
 box_unit = 24
-stored_piece = False
-depth = 2
+stored_piece = True
+depth = 3
 keyboard_delay = 0.016000001
+garbage = False
+
+if garbage == True: 
+    tetris_logic.set_garbage(True)
 
 #define pieces:
 #   0: I block (cyan), 1: O block (yellow), 2: T block (pink), 3: S block (green), 
 #   4: Z block (red), 5: J block (blue), 6: L block (orang)
-I_bgr = [215, 155, 15]
+I_bgr = [215, 155,  15]
 O_bgr = [2,159,227]
 T_bgr = [138, 41, 175]
 S_bgr = [1, 177, 89]
@@ -190,7 +199,7 @@ if stored_piece:
     game_img = cv2.cvtColor(np.array(sct.grab(game_box)), cv2.COLOR_BGRA2BGR)
     move = tetris_logic.get_next_move(game_img, 1, False)
     make_move(move)
-#time.sleep(0.1)
+#time.sleep(0)
 
 print(upcoming_pieces)
 

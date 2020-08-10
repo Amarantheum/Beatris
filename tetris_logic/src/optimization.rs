@@ -740,11 +740,16 @@ impl Field {
     fn from<'a>(prior_field: &Field, new_move: &Move, new_piece: &Piece) -> Result<Field, &'a str> {
         let tmp2;
         let mut new_piece = new_piece;
+        let mut stored_piece_value = 0.0;
         let stored_piece = if new_move.store == true {
             match prior_field.stored_piece {
                 Some(p) => {
                     let tmp = new_piece.id;
                     tmp2 = Piece::get_piece_from_id(p).unwrap().clone();
+                    stored_piece_value = match prior_field.constants.stored_piece_value {
+                        Some(arr) => arr[p as usize] - arr[new_piece.id as usize],
+                        None => 0.0,
+                    };
                     new_piece = &tmp2;
                     Some(tmp)
                 }
@@ -830,6 +835,7 @@ impl Field {
             constants: prior_field.constants.clone(),
             
         };
+        f.value += stored_piece_value;
         Field::clean_sent_lines(&mut f);
         Ok(f)
     }
@@ -951,7 +957,7 @@ impl Field {
                 }
             }
         }
-        let score = -(self.constants.jagged_cost * jaggedness as f64 + self.constants.hole_height_cost * hole_value as f64 + self.constants.hole_cost * hole_count as f64 + self.constants.height_cost * height_costs as f64);
+        let score = -(self.constants.jagged_cost * jaggedness as f64 + self.constants.hole_height_cost * hole_value as f64 + self.constants.hole_cost * hole_count as f64 + self.constants.height_cost * height_costs as f64) + self.value;
         score
     }
     
