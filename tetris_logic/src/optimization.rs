@@ -291,9 +291,9 @@ fn optimization(range: f64) {
         OptimizationConstants::save_to_file(&final_constants).unwrap();
         constants = final_constants;
         count += 1;
-        if count > 10 {
+        /*if count > 10 {
             break;
-        }
+        }*/
     }
 
     // Run Trials w/ Gradient Ascent
@@ -310,28 +310,28 @@ fn ga_constant<'a> (constants: &'a OptimizationConstants, constant_index: i8, s:
     let constants_neg;
     match constant_index { 
         0 => {
-            constants_pos = constants.update_hole_cost(TEST_STEP);
-            constants_neg = constants.update_hole_cost(-TEST_STEP);
+            constants_pos = constants.update_hole_cost(get_change(constants.hole_cost));
+            constants_neg = constants.update_hole_cost(-get_change(constants.hole_cost));
         }
         1 => {
-            constants_pos = constants.update_hole_height_cost(TEST_STEP);
-            constants_neg = constants.update_hole_height_cost(-TEST_STEP);
+            constants_pos = constants.update_hole_height_cost(get_change(constants.hole_height_cost));
+            constants_neg = constants.update_hole_height_cost(-get_change(constants.hole_height_cost));
         }
         v @ 2..=5 => {
-            constants_pos = constants.update_line_values(v as usize - 2, TEST_STEP);
-            constants_neg = constants.update_line_values(v as usize - 2, -TEST_STEP);
+            constants_pos = constants.update_line_values(v as usize - 2, get_change(constants.line_values[v as usize - 2]));
+            constants_neg = constants.update_line_values(v as usize - 2, -get_change(constants.line_values[v as usize - 2]));
         }
         6 => {
-            constants_pos = constants.update_jagged_cost(TEST_STEP);
-            constants_neg = constants.update_jagged_cost(-TEST_STEP);
+            constants_pos = constants.update_jagged_cost(get_change(constants.jagged_cost));
+            constants_neg = constants.update_jagged_cost(-get_change(constants.jagged_cost));
         }
         7 => {
-            constants_pos = constants.update_height_cost(TEST_STEP);
-            constants_neg = constants.update_height_cost(-TEST_STEP);
+            constants_pos = constants.update_height_cost(get_change(constants.height_cost));
+            constants_neg = constants.update_height_cost(-get_change(constants.height_cost));
         }
         8 => {
-            constants_pos = constants.update_combo_value(TEST_STEP);
-            constants_neg = constants.update_combo_value(-TEST_STEP);
+            constants_pos = constants.update_combo_value(get_change(constants.combo_value));
+            constants_neg = constants.update_combo_value(-get_change(constants.combo_value));
         }
         9 => {
             constants_pos = match constants.update_height_threshold(1) {
@@ -344,8 +344,14 @@ fn ga_constant<'a> (constants: &'a OptimizationConstants, constant_index: i8, s:
             };
         }
         v @ 10..=16 => {
-            constants_pos = constants.update_stored_piece_value(v as usize - 10, TEST_STEP)?;
-            constants_neg = constants.update_stored_piece_value(v as usize - 10, -TEST_STEP)?;
+            constants_pos = constants.update_stored_piece_value(v as usize - 10, get_change(match constants.stored_piece_value {
+                Some(arr) => arr[v as usize - 10],
+                None => return Err("No stored pieces"),
+            }))?;
+            constants_neg = constants.update_stored_piece_value(v as usize - 10, -get_change(match constants.stored_piece_value {
+                Some(arr) => arr[v as usize - 10],
+                None => return Err("No stored pieces"),
+            }))?;
         }
         _ => {
             panic!("Smh Bruh not a correct index");
@@ -363,6 +369,11 @@ fn ga_constant<'a> (constants: &'a OptimizationConstants, constant_index: i8, s:
     });
 
     Ok(outputs)
+}
+
+fn get_change(start_value: f64) -> f64 {
+    println!("change: {}", start_value/10.0 + 1.0);
+    start_value/10.0 + 3.0
 }
 
 #[cfg(test)]
@@ -454,6 +465,9 @@ fn run_test_trials(constants: &OptimizationConstants) -> f64 {
 fn run_test(num_moves: usize, constants: OptimizationConstants) -> TestResult {
     let mut generator = PieceGenerator::new();
     let mut field = Field::new([generator.get_next_piece(), generator.get_next_piece(), generator.get_next_piece(), generator.get_next_piece(), generator.get_next_piece()], constants);
+    if STORED_PIECES {
+        field.stored_piece = Some(generator.get_next_piece());
+    }
     
     for i in 0..num_moves {
         let suggested_move = match field.calculate_all_resulting_fields_scope(DEPTH, true) {
