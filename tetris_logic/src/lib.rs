@@ -30,7 +30,7 @@ const J_BGR: [u8;3] = [198, 65, 33];
 const L_BGR: [u8;3] = [2, 91, 227];
 
 const BLANK_BGR: [u8; 3] = [0, 0, 0];
-//const GRAY_BGR: [u8; 3] = [106, 106, 106];
+const DARK_GRAY_BGR: [u8; 3] = [106, 106, 106];
 const PIECE_BGR_VALUES:[[u8;3];7] = [I_BGR, O_BGR, T_BGR, S_BGR, Z_BGR, J_BGR, L_BGR];
 
 const PIECE_STORED_VALUES:[i32;7] = [40, 2, 2, -1, -3, -1, 1];
@@ -248,7 +248,7 @@ impl Field {
                 //FOR LOOP METHOD
                 let mut max_block_y_value = 20;
                 for y in 0..20 {
-                    match current_field.slice(s![y, ..]).into_iter().find(|&&x| x == 1) {
+                    match current_field.slice(s![y, ..]).into_iter().find(|&&x| x == 1 || x == 2) {
                         Some(v) => {
                             max_block_y_value = y;
                             break;
@@ -278,7 +278,7 @@ impl Field {
                         break;
                     }
                     let test_field_section = &current_field.slice(s![y - piece_size[0]..y, ..]) + &new_piece.orientations[new_move.rotation as usize].1;
-                    match test_field_section.into_iter().find(|&&x| x == 2) {
+                    match test_field_section.into_iter().find(|&&x| x == 2 || x == 3) {
                         Some(_v) => {
                             if danger_height {
                                 return Err("smh too high");
@@ -709,7 +709,12 @@ fn track_garbage(img: ArrayViewD<u8>) {
             if x > 1 && !gray {
                 break;
             }
-            if compare_colors(&img.slice(s![(19 - y) * get_box_unit(), x * get_box_unit(), ..]).to_vec(), get_gray_bgr()) < get_color_thresh() {
+            if compare_colors(&img.slice(s![(19 - y) * get_box_unit(), x * get_box_unit(), ..]).to_vec(), DARK_GRAY_BGR) < get_color_thresh() {
+                gray = true;
+                row = array![[2; 10]];
+                break;
+            }
+            else if compare_colors(&img.slice(s![(19 - y) * get_box_unit(), x * get_box_unit(), ..]).to_vec(), get_gray_bgr()) < get_color_thresh() {
                 gray = true;
                 row[[0, x]] = 1;
             }
