@@ -14,11 +14,6 @@ monitor = Tk()
 
 #time.sleep(3) #For testing 
 
-tetris_logic.set_line_value(0, -100)
-tetris_logic.set_line_value(1, -30)
-tetris_logic.set_line_value(2, 0)
-tetris_logic.set_line_value(3, 1600)
-
 #global variables
 box_unit = 24
 stored_piece = True

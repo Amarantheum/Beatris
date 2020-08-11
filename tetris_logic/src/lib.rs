@@ -33,7 +33,7 @@ const BLANK_BGR: [u8; 3] = [0, 0, 0];
 //const GRAY_BGR: [u8; 3] = [106, 106, 106];
 const PIECE_BGR_VALUES:[[u8;3];7] = [I_BGR, O_BGR, T_BGR, S_BGR, Z_BGR, J_BGR, L_BGR];
 
-const PIECE_STORED_VALUES:[i32;7] = [40, 0, 0, 0, 0, 0, 0];
+const PIECE_STORED_VALUES:[i32;7] = [40, 2, 2, -1, -3, -1, 1];
 
 
 lazy_static! {
@@ -118,13 +118,13 @@ static mut COLOR_THRESH: AtomicUsize = AtomicUsize::new(15);
 const MOVES_PER_THREAD: usize = 20;
 // Evaluation Constants
 static mut BOX_UNIT: AtomicUsize = AtomicUsize::new(24);
-static mut HOLE_COST: AtomicI32 = AtomicI32::new(106);
+static mut HOLE_COST: AtomicI32 = AtomicI32::new(107);
 static mut HOLE_HEIGHT_COST: AtomicI32 = AtomicI32::new(19);
-static mut LINE_VALUES: [AtomicI32; 4] = [AtomicI32::new(-11), AtomicI32::new(21), AtomicI32::new(47), AtomicI32::new(1600)];
+static mut LINE_VALUES: [AtomicI32; 4] = [AtomicI32::new(-49), AtomicI32::new(-20), AtomicI32::new(1), AtomicI32::new(1600)];
 static mut JAGGED_COST: AtomicI32 = AtomicI32::new(6);
-static mut HEIGHT_THRESHOLD: AtomicU8 = AtomicU8::new(11);
-static mut HEIGHT_COST: AtomicI32 = AtomicI32::new(44);
-static mut COMBO_VALUE: AtomicI32 = AtomicI32::new(20);
+static mut HEIGHT_THRESHOLD: AtomicU8 = AtomicU8::new(13);
+static mut HEIGHT_COST: AtomicI32 = AtomicI32::new(50);
+static mut COMBO_VALUE: AtomicI32 = AtomicI32::new(13);
 
 
 // Storing Pieces Constants
