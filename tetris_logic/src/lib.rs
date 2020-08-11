@@ -122,7 +122,7 @@ static mut HOLE_COST: AtomicI32 = AtomicI32::new(107);
 static mut HOLE_HEIGHT_COST: AtomicI32 = AtomicI32::new(19);
 static mut LINE_VALUES: [AtomicI32; 4] = [AtomicI32::new(-49), AtomicI32::new(-20), AtomicI32::new(1), AtomicI32::new(1600)];
 static mut JAGGED_COST: AtomicI32 = AtomicI32::new(6);
-static mut HEIGHT_THRESHOLD: AtomicU8 = AtomicU8::new(13);
+static mut HEIGHT_THRESHOLD: AtomicU8 = AtomicU8::new(10);
 static mut HEIGHT_COST: AtomicI32 = AtomicI32::new(50);
 static mut COMBO_VALUE: AtomicI32 = AtomicI32::new(13);
 
@@ -392,7 +392,7 @@ impl Field {
                 }
             }
         }
-        let score = -(get_jagged_cost() * jaggedness as i32 + get_hole_height_cost() * hole_value as i32 + get_hole_cost() * hole_count as i32 + (get_height_threshold() * height_costs) as i32) + self.value;
+        let score = -(get_jagged_cost() * jaggedness as i32 + get_hole_height_cost() * hole_value as i32 + get_hole_cost() * hole_count as i32 + get_height_cost() * height_costs as i32) + self.value;
         score
     }
     

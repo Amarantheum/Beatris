@@ -634,11 +634,11 @@ impl OptimizationConstants {
                 return Err(std::io::Error::new(ErrorKind::Other, "meme"));
             }
             chosen_line = lines[i];
-            chosen_line.split(':').collect()
+            chosen_line.split(',').collect()
         }
         else {
             chosen_line = lines.last().unwrap();
-            chosen_line.split(':').collect()
+            chosen_line.split(',').collect()
         };
         if arr.last() == Some(&"") {
             arr.pop();
